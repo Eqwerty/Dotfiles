@@ -1,0 +1,36 @@
+# Install git-completion and source it
+curl -O https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
+
+if [ -f ~/git-completion.bash ]; then
+    . ~/git-completion.bash
+fi
+
+# General aliases
+alias chrome="/mnt/c/Users/<user>/AppData/Local/Google/Chrome/Application/chrome.exe"
+alias reload="source ~/.bashrc"
+alias bashrc="code ~/.bash_aliases --new-window"
+
+# Create a pull request and open it in the default browser
+function pr() {
+  local github_url branch_name main_branch pr_url clipboard_cmd
+  github_url=$(git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#https://#' -e 's@cloud:@cloud/@' -e 's@com:@com/@' -e 's%\.git$%%' | awk '/github/')
+  branch_name=$(git symbolic-ref HEAD | cut -d"/" -f 3,4)
+  main_branch=$(gdefault)
+  pr_url="$github_url/compare/$main_branch...$branch_name?expand=1"
+  
+  chrome "$pr_url"
+}
+ 
+# Open the current branch or the main branch in the GitHub repository
+function gh() {
+  local github_url main_branch current_branch url clipboard_cmd
+  github_url=$(git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#https://#' -e 's@cloud:@cloud/@' -e 's@com:@com/@' -e 's%\.git$%%' | awk '/github/')
+  main_branch=$(gdefault)
+  current_branch=$(gcurrent)
+  url="$github_url"
+  if [[ "$main_branch" != "$current_branch" ]]; then
+    url="$github_url/tree/$current_branch"
+  fi
+  
+  chrome "$github_url"
+}
