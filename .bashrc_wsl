@@ -9,6 +9,7 @@ fi
 alias chrome="/mnt/c/Users/<user>/AppData/Local/Google/Chrome/Application/chrome.exe"
 alias reload="source ~/.bashrc"
 alias bashrc="code ~/.bash_aliases --new-window"
+eval "$(~/.local/bin/oh-my-posh init bash --config /mnt/c/Users/<user>/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json)"
 
 # Create a pull request and open it in the default browser
 function pr() {
