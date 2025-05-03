@@ -184,6 +184,9 @@ alias guser="git config --get user.name"
 
 # Get the configured Git email
 alias gemail="git config --get user.email"
+
+# List the current global Git configuration
+alias gcgl="git config --global --list"
 # =========================================================
  
 # Reset the current branch to n commits before HEAD (default is 1)
@@ -418,3 +421,5 @@ __git_complete gsh _git_show
 if [ -f ~/routes.sh ]; then
     . ~/routes.sh
 fi
+
+eval "$(oh-my-posh init bash --config $POSH_THEMES_PATH/eqwerty.omp.json)"
