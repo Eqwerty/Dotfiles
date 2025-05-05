@@ -189,10 +189,13 @@ alias gemail="git config --get user.email"
 alias gcgl="git config --global --list"
 # =========================================================
  
-# Reset the current branch to n commits before HEAD (default is 1)
+# Reset the current branch to n commits before HEAD
 function grh() {
-    local count=${1:-1}
-    git reset HEAD~$count
+  if [ -z "$1" ]; then
+    echo "Usage: grh <number-of-commits>"
+    return 1
+  fi
+  git reset HEAD~$1
 }
  
 # Reset the current branch to the specified commit and apply --hard
