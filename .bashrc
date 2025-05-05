@@ -228,12 +228,12 @@ function gcof() {
     echo "Usage: gcof <partial-branch-name>"
     return 1
   fi
- 
+
   local match
-  mapfile -t matches < <(git branch --list "*$1*" | sed 's/^[* ] //' )
- 
+  mapfile -t matches < <(git branch --list | grep -i "$1" | sed 's/^[* ] //')
+
   local count=${#matches[@]}
- 
+
   if [ "$count" -eq 1 ]; then
     git checkout "${matches[0]}"
   elif [ "$count" -gt 1 ]; then
