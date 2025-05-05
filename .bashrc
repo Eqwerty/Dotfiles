@@ -223,9 +223,9 @@ function gdelbr() {
 }
  
 # Check out a branch based on a partial name match.
-function gcof() {
+function gcogr() {
   if [ -z "$1" ]; then
-    echo "Usage: gcof <partial-branch-name>"
+    echo "Usage: gcogr <partial-branch-name>"
     return 1
   fi
 
@@ -249,9 +249,9 @@ function gcof() {
 }
 
 # Add a file based on a partial name match from modified files
-function gaf() {
+function gagr() {
   if [ -z "$1" ]; then
-    echo "Usage: gaf <partial-file-name>"
+    echo "Usage: gagr <partial-file-name>"
     return 1
   fi
 
@@ -279,9 +279,9 @@ function gaf() {
 }
 
 # Show the diff of a file based on a partial name match from modified files
-function gdf() {
+function gdgr() {
   if [ -z "$1" ]; then
-    echo "Usage: gdf <partial-file-name>"
+    echo "Usage: gdgr <partial-file-name>"
     return 1
   fi
 
@@ -336,8 +336,8 @@ function gh() {
   start "$url"
 }
  
-# Find and display files or directories matching a string (case-insensitive)
-function f() {
+# Find and display files or directories matching a string
+function gr() {
   # Store the result of ls | grep -i "string"
   local results=$(ls -a | grep -i -- "$1")
  
@@ -351,8 +351,8 @@ function f() {
   fi
 }
  
-# Change directory to the first match for a given string (case-insensitive)
-function cdf() {
+# Change directory to the first match for a given string
+function cdgr() {
   # Store the result of ls | grep -i "string" (directories only)
   local results=$(ls -d */ | grep -i -- "$1")
  
@@ -375,8 +375,8 @@ function cdf() {
   fi
 }
  
-# Display the contents of a file if exactly one match is found (case-insensitive)
-function catf() {
+# Display the contents of a file if exactly one match is found
+function catgr() {
   # Store the result of ls | grep -i "string"
   local results=$(ls -a | grep -i -- "$1")
   local count=$(echo "$results" | wc -l)
