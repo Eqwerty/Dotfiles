@@ -257,7 +257,7 @@ function gaf() {
 
   local match
   # Get all modified files
-  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep "$1")
+  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$1")
 
   local count=${#matches[@]}
 
