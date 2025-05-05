@@ -337,7 +337,7 @@ function gh() {
 }
  
 # Find and display files or directories matching a string
-function gr() {
+function f() {
   # Store the result of ls | grep -i "string"
   local results=$(ls -a | grep -i -- "$1")
  
