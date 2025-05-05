@@ -277,6 +277,36 @@ function gaf() {
     return 3
   fi
 }
+
+# Show the diff of a file based on a partial name match from modified files
+function gdf() {
+  if [ -z "$1" ]; then
+    echo "Usage: gdf <partial-file-name>"
+    return 1
+  fi
+
+  local match
+  # Get all modified files
+  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$1")
+
+  local count=${#matches[@]}
+
+  if [ "$count" -eq 1 ]; then
+    # Show the diff of the single matched file
+    git diff "${matches[0]}"
+  elif [ "$count" -gt 1 ]; then
+    # Show a message with multiple matches
+    echo "Multiple matches found:"
+    for file in "${matches[@]}"; do
+      echo "  $file"
+    done
+    return 2
+  else
+    # No matches found
+    echo "No files found matching '$1'"
+    return 3
+  fi
+}
  
 # Create a pull request and open it in the default browser
 function pr() {
