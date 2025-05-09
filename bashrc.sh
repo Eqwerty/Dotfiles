@@ -52,6 +52,8 @@ function catgr() {
   fi
 }
 
+alias updategitaliases='curl -fsSL "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git-aliases.sh" -o "$HOME/git-aliases.sh" && reload'
+
 for alias_file in \
     ~/custom-aliases.sh \
     ~/git-aliases.sh \
