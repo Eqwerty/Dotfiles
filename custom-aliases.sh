@@ -18,4 +18,4 @@ function rider() {
 
 # Set up Oh My Posh for Bash
 alias updateeqwertytheme='curl -fsSL "https://raw.githubusercontent.com/Eqwerty/oh-my-posh-themes/refs/heads/main/eqwerty.omp.json" -o "$HOME/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json"'
-eval "$(oh-my-posh init bash --config 'C:/Users/eduardoq/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json')"
+eval "$(oh-my-posh init bash --config 'C:/Users/<user>/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json')"
