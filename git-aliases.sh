@@ -222,7 +222,7 @@ __git_complete gdno _git_diff
 __git_complete gds _git_diff
 __git_complete gdsno _git_diff
 __git_complete ggr _git_grep
-__git_complete glhb _git_log
+__git_complete glh _git_log
 __git_complete gm _git_merge
 __git_complete gms _git_merge
 __git_complete gr _git_rebase
