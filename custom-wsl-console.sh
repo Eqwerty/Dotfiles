@@ -14,4 +14,4 @@ xterm*|rxvt*)
     ;;
 esac
 
-eval "$(~/.local/bin/oh-my-posh init bash --config /mnt/c/Users/eduardoq/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json)"
+eval "$(~/.local/bin/oh-my-posh init bash --config /mnt/c/Users/<user>/AppData/Local/Programs/oh-my-posh/themes/eqwerty.omp.json)"
