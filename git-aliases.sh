@@ -214,7 +214,7 @@ function __git_match_and_execute() {
 __git_complete ga _git_add
 __git_complete gb _git_branch
 __git_complete gbd _git_branch
-__git_complete gbD _git_branch
+__git_complete gbdf _git_branch
 __git_complete gco _git_checkout
 __git_complete gcot _git_checkout
 __git_complete gd _git_diff
