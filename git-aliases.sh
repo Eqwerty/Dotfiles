@@ -108,6 +108,15 @@ function glm() {
     glogm -n $count
 }
 
+# Show changes of a specific stash
+function gssh() {
+  if [ -z "$1" ]; then
+    echo "Usage: gssh <stash-index>"
+    return 1
+  fi
+  git stash show -p "stash@{$1}"
+}
+
 # Check out a branch based on a partial name match.
 function gcobgr() {
   if [ -z "$1" ]; then
