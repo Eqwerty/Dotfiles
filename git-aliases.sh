@@ -160,17 +160,12 @@ function gdgr() {
 
 # Create a pull request and open it in the default browser
 function pr() {
-  local github_url branch_name main_branch pr_url open_or_start uname
+  local github_url branch_name main_branch pr_url
   github_url=$(git remote -v | awk '/fetch/{print $2}' | sed -Ee 's#(git@|git://)#https://#' -e 's@cloud:@cloud/@' -e 's@com:@com/@' -e 's%\.git$%%' | awk '/github/')
   branch_name=$(git symbolic-ref HEAD | cut -d"/" -f 3,4)
   main_branch=$(gdefault)
-  open_or_start='open'
-  uname=$(uname)
-  if [[ "$uname" == CYGWIN* || "$uname" == MINGW* || "$uname" == MSYS* ]]; then
-    open_or_start='start'
-  fi
-  pr_url="$github_url/compare/$main_branch...$branch_name?expand=1"
-  $open_or_start "$pr_url"
+  pr_url="$github_url/compare/$main_branch...$branch_name"
+  explorer.exe "$pr_url"
 }
  
 # Open the current branch or the main branch in the GitHub repository
