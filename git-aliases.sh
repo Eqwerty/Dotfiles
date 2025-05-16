@@ -40,8 +40,8 @@ alias gc="git commit -m" # Commit with a message
 alias gca="git commit --amend --no-edit" # Amend the last commit without changing the message
 alias gcae="git commit --amend" # Amend the last commit and edit the message
 alias gcne="git commit --no-edit" # Commit without editing the message
-alias gd="git diff" # Show changes between commits, branches, or the working directory
-alias gds="git diff --staged" # Show changes in the staging area
+alias gd="git diff --color | diff-so-fancy" # Show changes between commits, branches, or the working directory
+alias gds="git diff --color --staged | diff-so-fancy" # Show changes in the staging area
 alias gf="git fetch" # Fetch changes from the remote
 alias gfs="git fetch && git status" # Fetch changes and show the status
 alias ggr="git grep --no-index -i -I --exclude-standard --heading --line-number" # Search for a string in the repository
@@ -64,8 +64,6 @@ alias gra="git rebase --abort" # Abort a rebase
 alias gref="git reflog" # Show the reflog
 alias grm="git reset --mixed" # Reset index but keep changes in the working directory (mixed mode)
 alias grhh="git reset HEAD --hard" # Discards all uncommitted changes (hard reset).
-alias gsh="git show" # Show details of a commit
-alias gshno="git show --name-only" # Show names of files changed in a commit
 alias gs="git status" # Show the status of the working directory
 alias gss="git status -s" # Show a short status of the working directory
 alias gsu="git stash -u" # Stash untracked changes
@@ -86,7 +84,19 @@ function grh() {
   fi
   git reset HEAD~$1
 }
- 
+
+# Show details of a specific commit (or HEAD if none provided) using diff-so-fancy
+function gsh() {
+  local commit="${1:-HEAD}"
+  git show "$commit" | diff-so-fancy
+}
+
+# Show names of files changed in a commit
+function gshno() {
+  local commit="${1:-HEAD}"
+  git show "$commit" --name-only | diff-so-fancy
+}
+
 # Reset the current branch to the specified commit and apply --hard
 function grch() {
   if [ -z "$1" ]; then
@@ -114,7 +124,7 @@ function gssh() {
     echo "Usage: gssh <stash-index>"
     return 1
   fi
-  git stash show -p "stash@{$1}"
+  git stash show -p "stash@{$1}" | diff-so-fancy
 }
 
 # Check out a branch based on a partial name match.
