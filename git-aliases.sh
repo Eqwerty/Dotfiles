@@ -22,8 +22,7 @@
 
 alias gcl="git clone" # Clone a repository
 alias ga="git add" # Add files to the staging area
-alias gas="git add -A && git status" # Add all changes to the staging area and show the status
-alias gass="git add -A && gss" # Add all changes to the staging area and show a short status
+alias gas="git add -A && git status -s" # Add all changes to the staging area and show a short status
 alias gbl="git blame --color-by-age --color-lines" # Show blame information with color-by-age and color-lines
 alias gb="git branch" # List branches
 alias gbv="git branch -vv" # List branches with verbose information
