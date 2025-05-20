@@ -18,7 +18,7 @@
 # File Checkout: gcofgr
 # PR:            pr
 # GitHub:        gh
-# Utils:         gcurrent, gdefault, gcgl
+# Utils:         gcurrent, gdefault, gcgl, gcge
 
 alias gcl="git clone" # Clone a repository
 alias ga="git add" # Add files to the staging area
@@ -74,6 +74,7 @@ alias gsc="git stash clear" # Clear all stashes
 alias gdefault="git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4" # Get the default branch name
 alias gcurrent="git symbolic-ref --short HEAD" # Get the current branch name
 alias gcgl="git config --global --list" # List the current global Git configuration
+alias gcge="git config --global --edit" # Opens the global Git configuration file
 
 # Reset the current branch to n commits before HEAD
 function grh() {
