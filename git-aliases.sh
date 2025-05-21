@@ -31,27 +31,17 @@ alias gcob="git checkout -b" # Create and switch to a new branch
 # Check out a branch based on a partial name match.
 function gcobgr() {
   if [ -z "$1" ]; then
-    echo "Usage: gcogr <partial-branch-name>"
+    echo "Usage: gcobgr <partial-branch-name>"
     return 1
   fi
 
-  local match
   mapfile -t matches < <(git branch --list | grep -i "$1" | sed 's/^[* ] //')
 
-  local count=${#matches[@]}
-
-  if [ "$count" -eq 1 ]; then
-    git checkout "${matches[0]}"
-  elif [ "$count" -gt 1 ]; then
-    echo "Multiple matches found:"
-    for branch in "${matches[@]}"; do
-      echo "  $branch"
-    done
-    return 2
-  else
-    echo "No branches found matching '$1'"
-    return 3
-  fi
+  case ${#matches[@]} in
+    1) git checkout "${matches[0]}" ;;
+    0) echo "No branches found matching '$1'" ; return 3 ;;
+    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
+  esac
 }
 
 # ============================ Merge ============================
@@ -211,20 +201,12 @@ function __git_match_and_execute() {
   fi
 
   mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$partial_name")
-  local count=${#matches[@]}
 
-  if [ "$count" -eq 1 ]; then
-    eval "$command \"${matches[0]}\""
-  elif [ "$count" -gt 1 ]; then
-    echo "Multiple matches found:"
-    for file in "${matches[@]}"; do
-      echo "  $file"
-    done
-    return 2
-  else
-    echo "No files found matching '$partial_name'"
-    return 3
-  fi
+  case ${#matches[@]} in
+    1) eval "$command \"${matches[0]}\"" ;;
+    0) echo "No files found matching '$partial_name'" ; return 3 ;;
+    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
+  esac
 }
  
 # Enable autocomplete for aliases
