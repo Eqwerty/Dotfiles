@@ -157,6 +157,9 @@ alias gcp="git cherry-pick" # Apply the changes introduced by an existing commit
 alias gcpa="git cherry-pick --abort" # Cancel the cherry-picking operation and return to the pre-sequence state.
 alias gcpc="git cherry-pick --continue" # Continue the cherry-picking operation in progress.
 
+# ============================ Cherry-Pick ============================
+alias gap="git add --patch" # Interactively stage changes in the working directory
+
 # ============================ Links ============================
 # Create a pull request and open it in the default browser
 function pr() {
