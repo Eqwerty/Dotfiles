@@ -1,7 +1,7 @@
 # === Git Alias Index ===
 # Clone:         gcl
 # Add:           ga, gas, gass, gagr
-# Commit:        gc, gca, gcae, gcne
+# Commit:        gc, gca, gcam, gcne
 # Branch:        gb, gbv, gba, gbr, gbd, gbdf, gbm, gco, gcot, gcob, gcobgr
 # Merge:         gm, gma, gmc, gms
 # Fetch:         gf, gfs
@@ -37,7 +37,7 @@ alias gcob="git checkout -b" # Create and switch to a new branch
 alias gcfd="git clean -fd" # Remove untracked files and directories
 alias gc="git commit -m" # Commit with a message
 alias gca="git commit --amend --no-edit" # Amend the last commit without changing the message
-alias gcae="git commit --amend" # Amend the last commit and edit the message
+alias gcam="git commit --amend -m" # Amend the last commit and edit the message
 alias gcne="git commit --no-edit" # Commit without editing the message
 alias gd="git diff" # Show changes between commits, branches, or the working directory
 alias gds="git diff --staged" # Show changes in the staging area
