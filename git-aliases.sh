@@ -81,7 +81,7 @@ function gssh() {
     echo "Usage: gssh <stash-index>"
     return 1
   fi
-  git stash show -p "stash@{$1}"
+  git stash show -p stash@{$1}
 }
 
 # ============================ Log ============================
