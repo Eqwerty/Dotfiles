@@ -13,6 +13,7 @@ function gagr() {
 # ============================ Commit ============================
 alias gc="git commit -m" # Commit with a message
 alias gca="git commit --amend --no-edit" # Amend the last commit without changing the message
+alias gcae="git commit --amend --edit" # Amend the last commit
 alias gcam="git commit --amend -m" # Amend the last commit and edit the message
 
 # ============================ Branch ============================
