@@ -10,14 +10,8 @@ alias rmf="rm -fr"
 # Find and display files or directories matching a string
 function f() {
   local query="$1"
-  local results
-  results=$(find . -maxdepth 1 -iname "*$query*" -printf "%f\n")
 
-  if [[ -z "$results" ]]; then
-    echo -e "No files or directories found containing: $query"
-  else
-    echo "$results" | sed 's/^/- /'
-  fi
+  ls -a | grep -i "$query"
 }
 
 # Change directory to the first match for a given string
