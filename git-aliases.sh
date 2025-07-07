@@ -6,8 +6,8 @@ alias ga="git add" # Add files to the staging area
 alias gas="git add -A && git status -s" # Add all changes to the staging area and show a short status
 
 # Add a file based on a partial name match from modified files
-function gagr() {
-  __git_match_and_execute "gagr" "$1" "git add"
+function gam() {
+  __git_match_and_execute "gam" "$1" "git add"
 }
 
 # ============================ Commit ============================
@@ -29,9 +29,9 @@ alias gcot="git checkout --track" # Switch to a remote branch and track it
 alias gcob="git checkout -b" # Create and switch to a new branch
 
 # Check out a branch based on a partial name match.
-function gcobgr() {
+function gcobm() {
   if [ -z "$1" ]; then
-    echo "Usage: gcobgr <partial-branch-name>"
+    echo "Usage: gcobm <partial-branch-name>"
     return 1
   fi
 
@@ -136,8 +136,8 @@ alias gd="git diff" # Show changes between commits, branches, or the working dir
 alias gds="git diff --staged" # Show changes in the staging area
 
 # Show the diff of a file based on a partial name match from modified files
-function gdgr() {
-  __git_match_and_execute "gdgr" "$1" "git diff"
+function gdm() {
+  __git_match_and_execute "gdm" "$1" "git diff"
 }
 
 # ============================ Status ============================
@@ -149,8 +149,8 @@ alias gref="git reflog" # Show the reflog
 
 # ============================ File Checkout ============================
 # Check out a file based on a partial name match from modified files
-function gcofgr() {
-  __git_match_and_execute "gcofgr" "$1" "git checkout"
+function gcofm() {
+  __git_match_and_execute "gcofm" "$1" "git checkout"
 }
 
 # ============================ Cherry-Pick ============================
