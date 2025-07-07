@@ -15,7 +15,7 @@ function f() {
 }
 
 # Change directory to the first match for a given string
-function cdgr() {
+function cdm() {
   local query="$1"
   local results
   IFS=$'\n' read -rd '' -a results < <(find . -maxdepth 1 -type d -iname "*$query*" -printf "%f\n")
@@ -31,7 +31,7 @@ function cdgr() {
 }
 
 # Display the contents of a file if exactly one match is found
-function catgr() {
+function catm() {
   local query="$1"
   local results
   IFS=$'\n' read -rd '' -a results < <(find . -maxdepth 1 -type f -iname "*$query*" -printf "%f\n")
@@ -56,6 +56,6 @@ for alias_file in \
     if [[ -f $alias_file ]]; then
         source "$alias_file"
         alias_name=$(basename "$alias_file" .sh)
-        alias "$alias_name"="code $alias_file"
+        alias "$alias_name"="code $alias_file -n"
     fi
 done
