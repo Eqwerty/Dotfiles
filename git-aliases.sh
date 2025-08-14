@@ -22,7 +22,7 @@ alias gbv="git branch -vv" # List branches with verbose information
 alias gba="git branch -a" # List all branches (local and remote)
 alias gbr="git branch --remotes" # List remote branches
 alias gbd="git branch -d" # Delete a local branch
-alias gbdf="git branch -D" # Force delete a local branch
+alias gbD="git branch -D" # Force delete a local branch
 alias gbm="git branch -m" # Rename the current branch
 alias gco="git checkout" # Switch branches
 alias gcot="git checkout --track" # Switch to a remote branch and track it
@@ -221,7 +221,7 @@ function __git_match_and_execute() {
 __git_complete ga _git_add
 __git_complete gb _git_branch
 __git_complete gbd _git_branch
-__git_complete gbdf _git_branch
+__git_complete gbD _git_branch
 __git_complete gco _git_checkout
 __git_complete gcot _git_checkout
 __git_complete gd _git_diff
