@@ -134,6 +134,7 @@ function grch() {
 # ============================ Diff ============================
 alias gd="git diff" # Show changes between commits, branches, or the working directory
 alias gds="git diff --staged" # Show changes in the staging area
+alias gdfu="git diff --name-only --diff-filter=U" # Show files with unmerged changes or conflicts
 
 # Show the diff of a file based on a partial name match from modified files
 function gdm() {
