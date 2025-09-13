@@ -55,7 +55,7 @@ alias gfs="git fetch && git status" # Fetch changes and show the status
 
 # ============================ Pull ============================
 alias gpl="git pull" # Pull changes from the remote
-alias gpr="git pull -r" # Pull changes and rebase
+alias gplr="git pull -r" # Pull changes and rebase
 
 # ============================ Push ============================
 alias gpo="git push -u origin HEAD" # Push the current branch to the remote and set upstream
