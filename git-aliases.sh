@@ -4,6 +4,7 @@ alias gcl="git clone" # Clone a repository
 # ============================ Add ============================
 alias ga="git add" # Add files to the staging area
 alias gas="git add -A && git status -s" # Add all changes to the staging area and show a short status
+alias gap="git add --patch" # Interactively stage changes in the working directory
 
 # Add a file based on a partial name match from modified files
 function gam() {
@@ -157,9 +158,6 @@ function gcofm() {
 alias gcp="git cherry-pick" # Apply the changes introduced by an existing commit
 alias gcpa="git cherry-pick --abort" # Cancel the cherry-picking operation and return to the pre-sequence state.
 alias gcpc="git cherry-pick --continue" # Continue the cherry-picking operation in progress.
-
-# ============================ Cherry-Pick ============================
-alias gap="git add --patch" # Interactively stage changes in the working directory
 
 # ============================ Links ============================
 # Create a pull request and open it in the default browser
