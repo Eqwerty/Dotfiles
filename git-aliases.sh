@@ -119,7 +119,7 @@ function grh() {
     echo "Usage: grh <number-of-commits>"
     return 1
   fi
-  git reset HEAD~$1
+  git reset HEAD~$1 --soft
 }
 
 # Reset the current branch to the specified commit and apply --hard
