@@ -82,7 +82,7 @@ function gssh() {
     echo "Usage: gssh <stash-index>"
     return 1
   fi
-  git stash show -p stash@{$1}
+  git stash show -w -p stash@{$1}
 }
 
 # ============================ Log ============================
@@ -106,7 +106,7 @@ function glm() {
 # ============================ Show ============================
 alias gbl="git blame --color-by-age --color-lines" # Show blame information with color-by-age and color-lines
 alias ggr="git grep --no-index -i -I --exclude-standard --heading --line-number" # Search for a string in the repository
-alias gsh="git show" # Show details of a commit
+alias gsh="git show -w" # Show details of a commit
 alias gshno="git show --name-only" # Show names of files changed in a commit
 
 # ============================ Reset ============================
@@ -132,8 +132,8 @@ function grch() {
 }
 
 # ============================ Diff ============================
-alias gd="git diff" # Show changes between commits, branches, or the working directory
-alias gds="git diff --staged" # Show changes in the staging area
+alias gd="git diff -w" # Show changes between commits, branches, or the working directory
+alias gds="git diff -w --staged" # Show changes in the staging area
 alias gdfu="git diff --name-only --diff-filter=U" # Show files with unmerged changes or conflicts
 
 # Show the diff of a file based on a partial name match from modified files
