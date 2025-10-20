@@ -60,7 +60,7 @@ alias gplr="git pull -r" # Pull changes and rebase
 
 # ============================ Push ============================
 alias gpo="git push -u origin HEAD" # Push the current branch to the remote and set upstream
-alias gpof="git push -u origin HEAD --force" # Force push the current branch to the remote
+alias gpof="git push -u origin HEAD --force-with-lease" # Force push the current branch to the remote
 
 # ============================ Rebase ============================
 alias gr="git rebase" # Rebase the current branch
