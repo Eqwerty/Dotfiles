@@ -86,7 +86,7 @@ function gssh() {
 }
 
 # ============================ Log ============================
-alias glog="git log --graph --pretty=format:'%C(yellow)%h%Creset -%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit" # Show a graphical log with commit details
+alias glog="git log --graph --pretty=format:'%C(yellow)%h%Creset%C(auto)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit" # Show a graphical log with commit details
 alias glogm="glog --author='$(git config --get user.email)'" # Show a graphical log with commits by the current user
 alias glh="glog HEAD.." # Show commits in other branches not yet merged into HEAD
 alias gluh="glog @{u}..HEAD" # Show commits not pushed to the upstream branch
