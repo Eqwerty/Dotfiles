@@ -1,11 +1,5 @@
 alias reload="source ~/.bashrc"
 alias bashrc="code ~/.bashrc"
-alias cls="clear"
-alias ls="ls --color=auto"
-alias lsa="ls -a"
-alias lsd="ls -d */"
-alias ..="cd .."
-alias rmf="rm -fr"
 
 # Find and display files or directories matching a string
 function f() {
