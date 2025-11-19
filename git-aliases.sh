@@ -75,6 +75,7 @@ alias gsd="git stash drop" # Drop a stash
 alias gsp="git stash pop" # Apply the most recent stash
 alias gsl="git stash list" # List all stashes
 alias gsc="git stash clear" # Clear all stashes
+alias gsa="git stash apply" # Apply a stash
 
 # Show changes of a specific stash
 function gssh() {
