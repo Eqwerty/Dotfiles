@@ -142,6 +142,11 @@ function gdm() {
   __git_match_and_execute "gdm" "$1" "git diff"
 }
 
+# Show the diff of a staged file based on a partial name match from modified files
+function gdms() {
+  __git_match_and_execute "gdms" "$1" "git diff --staged"
+}
+
 # ============================ Status ============================
 alias gs="git status" # Show the status of the working directory
 alias gss="git status -s" # Show a short status of the working directory
