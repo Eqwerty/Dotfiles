@@ -52,6 +52,7 @@ alias gms="git merge --squash" # Squash commits during a merge
 
 # ============================ Fetch ============================
 alias gf="git fetch" # Fetch changes from the remote
+alias gfa="git fetch --all" # Fetch changes from all remotes
 alias gfs="git fetch && git status" # Fetch changes and show the status
 
 # ============================ Pull ============================
