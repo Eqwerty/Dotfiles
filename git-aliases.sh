@@ -144,8 +144,8 @@ function gdm() {
 }
 
 # Show the diff of a staged file based on a partial name match from modified files
-function gdms() {
-  __git_match_and_execute "gdms" "$1" "git diff --staged"
+function gdsm() {
+  __git_match_and_execute "gdsm" "$1" "git diff --staged"
 }
 
 # ============================ Status ============================
