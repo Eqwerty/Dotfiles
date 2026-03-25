@@ -42,13 +42,13 @@ function _match() {
   fi
 }
 
-alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git-aliases.sh" -o "$HOME/git-aliases.sh" && reload'
+alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh" -o "$HOME/.git_aliases.sh" && reload'
 
 for alias_file in \
-    ~/custom-aliases.sh \
-    ~/git-aliases.sh \
-    ~/route-aliases.sh \
-    ~/link-aliases.sh; do
+    ~/.prompt.sh \
+    ~/.custom_aliases.sh \
+    ~/.git_aliases.sh
+do
     if [[ -f $alias_file ]]; then
         source "$alias_file"
         alias_name=$(basename "$alias_file" .sh)
