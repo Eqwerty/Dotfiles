@@ -85,20 +85,6 @@ git_prompt_info() {
     fi
 
     # -----------------------------
-    # REBASE / MERGE / CHERRY-PICK
-    # -----------------------------
-    local state=""
-    if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then
-        local cur=$(cat .git/rebase-merge/msgnum 2>/dev/null || cat .git/rebase-apply/next 2>/dev/null)
-        local tot=$(cat .git/rebase-merge/end 2>/dev/null || cat .git/rebase-apply/last 2>/dev/null)
-        state="${CLR_STATE}| REBASE ${cur}/${tot}${CLR_RESET}"
-    elif [ -f .git/MERGE_HEAD ]; then
-        state="${CLR_STATE}| MERGING${CLR_RESET}"
-    elif [ -f .git/CHERRY_PICK_HEAD ]; then
-        state="${CLR_STATE}| CHERRY-PICKING${CLR_RESET}"
-    fi
-
-    # -----------------------------
     # BUILD OUTPUT
     # -----------------------------
     local out=""
@@ -125,7 +111,7 @@ git_prompt_info() {
     # ---- STASH ----
     [ "$stash" -gt 0 ] && out+=" ${CLR_STASH}@$stash${CLR_RESET}"
 
-    echo -e "${out} ${state}"
+    echo -e "${out}"
 }
 
 # ------------------------------------------------------------
