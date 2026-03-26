@@ -42,7 +42,8 @@ function _match() {
   fi
 }
 
-alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh" -o "$HOME/.git_aliases.sh" && reload'
+alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh?$(date +%s)" -o "$HOME/.git_aliases.sh" && reload'
+alias updateprompt='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/prompt.sh?$(date +%s)" -o "$HOME/.prompt.sh" && reload'
 
 for alias_file in \
     ~/.prompt.sh \
