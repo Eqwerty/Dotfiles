@@ -28,47 +28,56 @@ CLR_RESET="\e[0m"
 # Git status summary
 # ------------------------------------------------------------
 git_prompt_info() {
-    git rev-parse --is-inside-work-tree &>/dev/null || return
+    local status
+    status="$(git status --porcelain=2 --branch 2>/dev/null)" || return
 
-    local untracked=$(git ls-files --others --exclude-standard | wc -l)
+    local untracked=0 conflicts=0 ahead=0 behind=0
+    declare -A staged=([A]=0 [M]=0 [D]=0 [R]=0)
+    declare -A unstaged=([A]=0 [M]=0 [D]=0 [R]=0)
 
-    local unstaged_added=$(git diff --name-status | grep -c '^A')
-    local unstaged_modified=$(git diff --name-status | grep -c '^M')
-    local unstaged_deleted=$(git diff --name-status | grep -c '^D')
-    local unstaged_renamed=$(git diff --name-status | grep -c '^R')
+    local line xy x y ab code symbol
+    while IFS= read -r line; do
+        case "$line" in
+            "# branch.ab "*)
+                ab="${line#\# branch.ab }"
+                ahead="${ab%% *}"; ahead="${ahead#+}"
+                behind="${ab##* }"; behind="${behind#-}"
+                ;;
+            "1 "*|"2 "*)
+                xy="${line:2:2}"
+                x="${xy:0:1}"
+                y="${xy:1:1}"
+                [[ -n "${staged[$x]+x}" ]] && ((staged[$x]++))
+                [[ -n "${unstaged[$y]+x}" ]] && ((unstaged[$y]++))
+                ;;
+            "u "*) ((conflicts++)) ;;
+            "? "*) ((untracked++)) ;;
+        esac
+    done <<< "$status"
 
-    local staged_added=$(git diff --cached --name-status | grep -c '^A')
-    local staged_modified=$(git diff --cached --name-status | grep -c '^M')
-    local staged_deleted=$(git diff --cached --name-status | grep -c '^D')
-    local staged_renamed=$(git diff --cached --name-status | grep -c '^R')
-
-    local stash=$(git stash list | wc -l)
-
-    local upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)
-    local ahead="" behind=""
-    if [ -n "$upstream" ]; then
-        read ahead behind <<<"$(git rev-list --left-right --count HEAD..."$upstream")"
-    fi
+    local stash
+    stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
 
     local out=""
+    [ "$ahead" -gt 0 ]  && out+=" ${CLR_AHEAD}↑$ahead${CLR_RESET}"
+    [ "$behind" -gt 0 ] && out+=" ${CLR_BEHIND}↓$behind${CLR_RESET}"
 
-    [[ "$ahead" =~ ^[0-9]+$ ]]  && [ "$ahead" -gt 0 ]  && out+=" ${CLR_AHEAD}↑$ahead${CLR_RESET}"
-    [[ "$behind" =~ ^[0-9]+$ ]] && [ "$behind" -gt 0 ] && out+=" ${CLR_BEHIND}↓$behind${CLR_RESET}"
-
-    [ "$staged_added" -gt 0 ]    && out+=" ${CLR_STAGED}+${staged_added}${CLR_RESET}"
-    [ "$staged_modified" -gt 0 ] && out+=" ${CLR_STAGED}~${staged_modified}${CLR_RESET}"
-    [ "$staged_deleted" -gt 0 ]  && out+=" ${CLR_STAGED}-${staged_deleted}${CLR_RESET}"
-    [ "$staged_renamed" -gt 0 ]  && out+=" ${CLR_STAGED}>${staged_renamed}${CLR_RESET}"
-
-    [ "$unstaged_added" -gt 0 ]    && out+=" ${CLR_UNSTAGED}+${unstaged_added}${CLR_RESET}"
-    [ "$unstaged_modified" -gt 0 ] && out+=" ${CLR_UNSTAGED}~${unstaged_modified}${CLR_RESET}"
-    [ "$unstaged_deleted" -gt 0 ]  && out+=" ${CLR_UNSTAGED}-${unstaged_deleted}${CLR_RESET}"
-    [ "$unstaged_renamed" -gt 0 ]  && out+=" ${CLR_UNSTAGED}>${unstaged_renamed}${CLR_RESET}"
+    for code in A M D R; do
+        case "$code" in
+            A) symbol="+" ;;
+            M) symbol="~" ;;
+            D) symbol="-" ;;
+            R) symbol="→" ;;
+        esac
+        [ "${staged[$code]}" -gt 0 ]   && out+=" ${CLR_STAGED}${symbol}${staged[$code]}${CLR_RESET}"
+        [ "${unstaged[$code]}" -gt 0 ] && out+=" ${CLR_UNSTAGED}${symbol}${unstaged[$code]}${CLR_RESET}"
+    done
 
     [ "$untracked" -gt 0 ] && out+=" ${CLR_UNTRACKED}?${untracked}${CLR_RESET}"
     [ "$stash" -gt 0 ]     && out+=" ${CLR_STASH}@$stash${CLR_RESET}"
+    [ "$conflicts" -gt 0 ] && out+=" ${CLR_STATE}!${conflicts}${CLR_RESET}"
 
-    echo -e "$out"
+    printf "%b" "$out"
 }
 
 # ------------------------------------------------------------
