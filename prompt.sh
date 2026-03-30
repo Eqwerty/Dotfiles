@@ -6,23 +6,29 @@ if [ -f /usr/share/git/completion/git-prompt.sh ]; then
 fi
 
 # ------------------------------------------------------------
-# Color palette
+# Variables and color palette
 # ------------------------------------------------------------
-CLR_USER="\e[0;32m"
-CLR_HOST="\e[1;35m"
-CLR_PATH="\e[38;5;172m"
-CLR_BRANCH="\e[1;36m"
+ESC=$'\e'
+RESET="${ESC}[0m"
+ITALIC="${ESC}[3m"
 
-CLR_STAGED="\e[0;32m"
-CLR_UNSTAGED="\e[0;31m"
-CLR_UNTRACKED="\e[0;31m"
-CLR_STASH="\e[38;5;244m"
-CLR_AHEAD="\e[1;36m"
-CLR_BEHIND="\e[1;36m"
-CLR_STATE="\e[1;31m"
+COLOR_USER="\e[0;32m"
+COLOR_HOST="\e[1;35m"
+COLOR_PATH="\e[38;5;172m"
+COLOR_BRANCH="\e[1;36m"
+COLOR_BRANCH_DETACHED="\e[1;36m"
+COLOR_BRANCH_NO_UPSTREAM="\e[1;36m"
 
-CLR_PROMPT="\e[0;37m"
-CLR_RESET="\e[0m"
+COLOR_STAGED="\e[0;32m"
+COLOR_UNSTAGED="\e[0;31m"
+COLOR_UNTRACKED="\e[0;31m"
+COLOR_STASH="\e[38;5;244m"
+COLOR_AHEAD="\e[1;36m"
+COLOR_BEHIND="\e[1;36m"
+COLOR_STATE="\e[1;31m"
+
+COLOR_PROMPT="\e[0;37m"
+COLOR_RESET="\e[0m"
 
 # ------------------------------------------------------------
 # Git status summary
@@ -35,20 +41,20 @@ git_prompt_info() {
     declare -A staged=([A]=0 [M]=0 [D]=0 [R]=0)
     declare -A unstaged=([A]=0 [M]=0 [D]=0 [R]=0)
 
-    local line xy x y ab code symbol
-    while IFS= read -r line; do
-        case "$line" in
+    local status_line xy_status index_status worktree_status ahead_behind status_code status_symbol
+    while IFS= read -r status_line; do
+        case "$status_line" in
             "# branch.ab "*)
-                ab="${line#\# branch.ab }"
-                ahead="${ab%% *}"; ahead="${ahead#+}"
-                behind="${ab##* }"; behind="${behind#-}"
+                ahead_behind="${status_line#\# branch.ab }"
+                ahead="${ahead_behind%% *}"; ahead="${ahead#+}"
+                behind="${ahead_behind##* }"; behind="${behind#-}"
                 ;;
             "1 "*|"2 "*)
-                xy="${line:2:2}"
-                x="${xy:0:1}"
-                y="${xy:1:1}"
-                [[ -n "${staged[$x]+x}" ]] && ((staged[$x]++))
-                [[ -n "${unstaged[$y]+x}" ]] && ((unstaged[$y]++))
+                xy_status="${status_line:2:2}"
+                index_status="${xy_status:0:1}"
+                worktree_status="${xy_status:1:1}"
+                [[ -n "${staged[$index_status]+x}" ]] && ((staged[$index_status]++))
+                [[ -n "${unstaged[$worktree_status]+x}" ]] && ((unstaged[$worktree_status]++))
                 ;;
             "u "*) ((conflicts++)) ;;
             "? "*) ((untracked++)) ;;
@@ -59,23 +65,23 @@ git_prompt_info() {
     stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
 
     local out=""
-    [ "$ahead" -gt 0 ]  && out+=" ${CLR_AHEAD}↑$ahead${CLR_RESET}"
-    [ "$behind" -gt 0 ] && out+=" ${CLR_BEHIND}↓$behind${CLR_RESET}"
+    [ "$ahead" -gt 0 ]  && out+=" ${COLOR_AHEAD}↑$ahead${COLOR_RESET}"
+    [ "$behind" -gt 0 ] && out+=" ${COLOR_BEHIND}↓$behind${COLOR_RESET}"
 
-    for code in A M D R; do
-        case "$code" in
-            A) symbol="+" ;;
-            M) symbol="~" ;;
-            D) symbol="-" ;;
-            R) symbol="→" ;;
+    for status_code in A M D R; do
+        case "$status_code" in
+            A) status_symbol="+" ;;
+            M) status_symbol="~" ;;
+            D) status_symbol="-" ;;
+            R) status_symbol=">" ;;
         esac
-        [ "${staged[$code]}" -gt 0 ]   && out+=" ${CLR_STAGED}${symbol}${staged[$code]}${CLR_RESET}"
-        [ "${unstaged[$code]}" -gt 0 ] && out+=" ${CLR_UNSTAGED}${symbol}${unstaged[$code]}${CLR_RESET}"
+        [ "${staged[$status_code]}" -gt 0 ]   && out+=" ${COLOR_STAGED}${status_symbol}${staged[$status_code]}${COLOR_RESET}"
+        [ "${unstaged[$status_code]}" -gt 0 ] && out+=" ${COLOR_UNSTAGED}${status_symbol}${unstaged[$status_code]}${COLOR_RESET}"
     done
 
-    [ "$untracked" -gt 0 ] && out+=" ${CLR_UNTRACKED}?${untracked}${CLR_RESET}"
-    [ "$stash" -gt 0 ]     && out+=" ${CLR_STASH}@$stash${CLR_RESET}"
-    [ "$conflicts" -gt 0 ] && out+=" ${CLR_STATE}!${conflicts}${CLR_RESET}"
+    [ "$untracked" -gt 0 ] && out+=" ${COLOR_UNTRACKED}?${untracked}${COLOR_RESET}"
+    [ "$stash" -gt 0 ]     && out+=" ${COLOR_STASH}@$stash${COLOR_RESET}"
+    [ "$conflicts" -gt 0 ] && out+=" ${COLOR_STATE}!${conflicts}${COLOR_RESET}"
 
     printf "%b" "$out"
 }
@@ -84,10 +90,6 @@ git_prompt_info() {
 # Branch wrapper with detached HEAD detection
 # ------------------------------------------------------------
 git_branch_wrapper() {
-    local ESC=$'\e'
-    local ITALIC="${ESC}[3m"
-    local RESET="${ESC}[0m"
-
     local raw="$(__git_ps1 "%s")"
 
     [[ -z "$raw" ]] && { echo ""; return; }
@@ -97,28 +99,56 @@ git_branch_wrapper() {
         local commit=$(git rev-parse HEAD)
         local short=$(git rev-parse --short HEAD)
 
-        local branch=$(git for-each-ref --format="%(refname:short)" refs/heads refs/remotes \
-            | while read ref; do
-                [[ "$(git rev-parse "$ref")" == "$commit" ]] && echo "$ref"
-            done | head -n 1)
+        local branch=""
+        local last_checkout_target=""
+        last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
+
+        # Prefer the exact checkout target when it resolves to the detached commit.
+        if [[ -n "$last_checkout_target" ]] && git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null; then
+            if [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
+                branch="$last_checkout_target"
+            fi
+        fi
+
+        if [[ -z "$branch" ]]; then
+            local ref
+
+            # Prefer real remote branches (origin/master), but skip symbolic aliases like origin/HEAD.
+            while IFS= read -r ref; do
+                [[ "$ref" == */HEAD ]] && continue
+                branch="$ref"
+                break
+            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes)
+
+            # Fallback to local branches if no remote branch points exactly at this commit.
+            if [[ -z "$branch" ]]; then
+                branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
+            fi
+        fi
 
         raw="${branch:+$branch }${short}..."
 
-        echo -e "~${CLR_BRANCH}${ITALIC}(${raw})${RESET}"
+        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw})${RESET}"
         return
     fi
 
-    # Normal branch
-    echo "($raw)"
+    # Normal branch: keep tracked upstream behavior unchanged.
+    if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+        echo "(${raw})"
+        return
+    fi
+
+    # No upstream configured for current branch.
+    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
 }
 
 # ------------------------------------------------------------
 # Prompt definition
 # ------------------------------------------------------------
 PS1='${debian_chroot:+($debian_chroot)}\
-\['"$CLR_USER"'\]\u\['"$CLR_RESET"'\]\
-\['"$CLR_HOST"'\] \h\['"$CLR_RESET"'\]\
-\['"$CLR_PATH"'\] \w\['"$CLR_RESET"'\]\
-\['"$CLR_BRANCH"'\] $(git_branch_wrapper)\['"$CLR_RESET"'\]\
+\['"$COLOR_USER"'\]\u\['"$COLOR_RESET"'\]\
+\['"$COLOR_HOST"'\] \h\['"$COLOR_RESET"'\]\
+\['"$COLOR_PATH"'\] \w\['"$COLOR_RESET"'\]\
+\['"$COLOR_BRANCH"'\] $(git_branch_wrapper)\['"$COLOR_RESET"'\]\
 $(git_prompt_info)\
-\n\['"$CLR_PROMPT"'\]\$ \['"$CLR_RESET"'\]'
+\n\['"$COLOR_PROMPT"'\]\$ \['"$COLOR_RESET"'\]'
