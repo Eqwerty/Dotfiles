@@ -33,11 +33,48 @@ COLOR_RESET="\e[0m"
 # ------------------------------------------------------------
 # Git status summary
 # ------------------------------------------------------------
+git_local_ahead_count() {
+    local current_branch start_commit base_ref fork_point
+
+    current_branch="$(git branch --show-current 2>/dev/null)"
+    [[ -z "$current_branch" ]] && { echo 0; return; }
+
+    # Prefer commit count from the branch creation point (oldest entry in branch reflog).
+    start_commit="$(git reflog show --format='%H' --reverse "refs/heads/${current_branch}" 2>/dev/null | head -n 1)"
+    if [[ -n "$start_commit" ]] && git rev-parse --verify --quiet "${start_commit}^{commit}" >/dev/null; then
+        git rev-list --count "${start_commit}..HEAD" 2>/dev/null || echo 0
+        return
+    fi
+
+    # Fallback to repo default branch or common mainline names.
+    if [[ -z "$base_ref" ]]; then
+        base_ref="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)"
+    fi
+    if [[ -z "$base_ref" ]]; then
+        local candidate
+        for candidate in origin/main origin/master main master; do
+            if git rev-parse --verify --quiet "${candidate}^{commit}" >/dev/null; then
+                base_ref="$candidate"
+                break
+            fi
+        done
+    fi
+
+    [[ -z "$base_ref" ]] && { echo 0; return; }
+
+    fork_point="$(git merge-base --fork-point "$base_ref" HEAD 2>/dev/null)"
+    if [[ -n "$fork_point" ]]; then
+        git rev-list --count "${fork_point}..HEAD" 2>/dev/null || echo 0
+    else
+        git rev-list --count "${base_ref}..HEAD" 2>/dev/null || echo 0
+    fi
+}
+
 git_prompt_info() {
     local status
     status="$(git status --porcelain=2 --branch 2>/dev/null)" || return
 
-    local untracked=0 conflicts=0 ahead=0 behind=0
+    local untracked=0 conflicts=0 ahead=0 behind=0 has_upstream=0
     declare -A staged=([A]=0 [M]=0 [D]=0 [R]=0)
     declare -A unstaged=([A]=0 [M]=0 [D]=0 [R]=0)
 
@@ -48,6 +85,7 @@ git_prompt_info() {
                 ahead_behind="${status_line#\# branch.ab }"
                 ahead="${ahead_behind%% *}"; ahead="${ahead#+}"
                 behind="${ahead_behind##* }"; behind="${behind#-}"
+                has_upstream=1
                 ;;
             "1 "*|"2 "*)
                 xy_status="${status_line:2:2}"
@@ -61,6 +99,12 @@ git_prompt_info() {
         esac
     done <<< "$status"
 
+    # No upstream branch: still show local progress from the likely branch base.
+    if [[ "$has_upstream" -eq 0 ]]; then
+        ahead="$(git_local_ahead_count)"
+        behind=0
+    fi
+
     local stash
     stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
 
@@ -73,7 +117,7 @@ git_prompt_info() {
             A) status_symbol="+" ;;
             M) status_symbol="~" ;;
             D) status_symbol="-" ;;
-            R) status_symbol=">" ;;
+            R) status_symbol="→" ;;
         esac
         [ "${staged[$status_code]}" -gt 0 ]   && out+=" ${COLOR_STAGED}${status_symbol}${staged[$status_code]}${COLOR_RESET}"
         [ "${unstaged[$status_code]}" -gt 0 ] && out+=" ${COLOR_UNSTAGED}${status_symbol}${unstaged[$status_code]}${COLOR_RESET}"
