@@ -34,35 +34,43 @@ COLOR_RESET="\e[0m"
 # Git status summary
 # ------------------------------------------------------------
 git_local_ahead_count() {
-    local current_branch start_commit base_ref fork_point
+    local current_branch base_ref fork_point
 
-    current_branch="$(git branch --show-current 2>/dev/null)"
-    [[ -z "$current_branch" ]] && { echo 0; return; }
-
-    # Prefer commit count from the branch creation point (oldest entry in branch reflog).
-    start_commit="$(git reflog show --format='%H' --reverse "refs/heads/${current_branch}" 2>/dev/null | head -n 1)"
-    if [[ -n "$start_commit" ]] && git rev-parse --verify --quiet "${start_commit}^{commit}" >/dev/null; then
-        git rev-list --count "${start_commit}..HEAD" 2>/dev/null || echo 0
+    # Fast exit when not in a git repo or no branch
+    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        echo 0
         return
     fi
 
-    # Fallback to repo default branch or common mainline names.
+    current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
+    [[ -z "$current_branch" ]] && { echo 0; return; }
+
+    # Prefer remote-tracking origin HEAD, then common mainline names
+    base_ref="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
     if [[ -z "$base_ref" ]]; then
-        base_ref="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null)"
-    fi
-    if [[ -z "$base_ref" ]]; then
-        local candidate
         for candidate in origin/main origin/master main master; do
-            if git rev-parse --verify --quiet "${candidate}^{commit}" >/dev/null; then
+            if git show-ref --verify --quiet "refs/remotes/${candidate#origin/}" || git show-ref --verify --quiet "refs/heads/${candidate#origin/}"; then
                 base_ref="$candidate"
                 break
             fi
         done
     fi
 
+    # If still empty, fall back to upstream if available
+    if [[ -z "$base_ref" ]]; then
+        if git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
+            base_ref="@{u}"
+        fi
+    fi
+
     [[ -z "$base_ref" ]] && { echo 0; return; }
 
-    fork_point="$(git merge-base --fork-point "$base_ref" HEAD 2>/dev/null)"
+    # Use merge-base --fork-point when available, otherwise merge-base
+    fork_point="$(git merge-base --fork-point "$base_ref" HEAD 2>/dev/null || true)"
+    if [[ -z "$fork_point" ]]; then
+        fork_point="$(git merge-base "$base_ref" HEAD 2>/dev/null || true)"
+    fi
+
     if [[ -n "$fork_point" ]]; then
         git rev-list --count "${fork_point}..HEAD" 2>/dev/null || echo 0
     else
