@@ -187,13 +187,26 @@ git_branch_wrapper() {
     printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
 }
 
+git_prompt_segment() {
+    local branch status
+
+    branch="$(git_branch_wrapper)"
+    status="$(git_prompt_info)"
+
+    # If both empty, return nothing
+    if [[ -z "$branch" && -z "$status" ]]; then
+        return
+    fi
+
+    printf "%b" "${COLOR_BRANCH}${branch}${COLOR_RESET}${status}"
+}
+
 # ------------------------------------------------------------
 # Prompt definition
 # ------------------------------------------------------------
 PS1='${debian_chroot:+($debian_chroot)}\
 \['"$COLOR_USER"'\]\u\['"$COLOR_RESET"'\]\
 \['"$COLOR_HOST"'\] \h\['"$COLOR_RESET"'\]\
-\['"$COLOR_PATH"'\] \w\['"$COLOR_RESET"'\]\
-\['"$COLOR_BRANCH"'\] $(git_branch_wrapper)\['"$COLOR_RESET"'\]\
-$(git_prompt_info)\
+\['"$COLOR_PATH"'\] \w \['"$COLOR_RESET"'\]\
+$(git_prompt_segment)\
 \n\['"$COLOR_PROMPT"'\]\$ \['"$COLOR_RESET"'\]'
