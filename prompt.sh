@@ -31,14 +31,28 @@ COLOR_PROMPT="\e[0;37m"
 COLOR_RESET="\e[0m"
 
 # ------------------------------------------------------------
+# Cache state for Git prompt
+# ------------------------------------------------------------
+__GIT_PROMPT_CACHE_KEY=""
+__GIT_PROMPT_CACHE_VALUE=""
+
+git_cache_key() {
+    local repo
+    repo="$(git rev-parse --git-dir 2>/dev/null)" || return 1
+
+    printf "%s:%s:%s" \
+        "$(stat -c %Y "$repo/HEAD" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/index" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/logs/refs/stash" 2>/dev/null || echo 0)"
+}
+
+# ------------------------------------------------------------
 # Count commits ahead of a base branch when no upstream exists.
-# Attempts: origin/HEAD → common mainline names → upstream.
 # ------------------------------------------------------------
 git_local_ahead_count() {
-    local current_branch base_ref fork_point
-
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo 0; return; }
 
+    local current_branch base_ref fork_point
     current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
     [[ -z "$current_branch" ]] && { echo 0; return; }
 
@@ -89,7 +103,7 @@ git_prompt_info() {
         behind="${ab##* }"; behind="${behind#-}"
         has_upstream=1
         ;;
-      "1 "*|"2 "*)  # staged/unstaged changes
+      "1 "*|"2 "*)  
         local xy="${line:2:2}"
         case "${xy:0:1}" in A) ((sA++)) ;; M) ((sM++)) ;; D) ((sD++)) ;; R) ((sR++)) ;; esac
         case "${xy:1:1}" in A) ((uA++)) ;; M) ((uM++)) ;; D) ((uD++)) ;; R) ((uR++)) ;; esac
@@ -99,7 +113,6 @@ git_prompt_info() {
     esac
   done <<< "$status"
 
-  # If no upstream, compute ahead count manually
   if [[ "$has_upstream" -eq 0 ]]; then
     ahead="$(git_local_ahead_count)"
     behind=0
@@ -129,60 +142,97 @@ git_prompt_info() {
 }
 
 # ------------------------------------------------------------
-# Branch display with detached HEAD resolution.
-# Attempts to infer the original branch or remote ref.
+# Branch display with detached HEAD resolution (original behavior).
 # ------------------------------------------------------------
 git_branch_wrapper() {
     local raw="$(__git_ps1 "%s")"
+
     [[ -z "$raw" ]] && { echo ""; return; }
 
     # Detached HEAD
     if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
-        local commit short branch last_checkout_target
-        commit=$(git rev-parse HEAD)
-        short=$(git rev-parse --short HEAD)
-        last_checkout_target="$(git reflog -1 --format='%gs' | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
+        local commit=$(git rev-parse HEAD)
+        local short=$(git rev-parse --short HEAD)
 
-        # Prefer the checkout target if it resolves to this commit
-        if [[ -n "$last_checkout_target" ]] &&
-           git rev-parse --verify --quiet "${last_checkout_target}^{commit}" &&
-           [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
-            branch="$last_checkout_target"
+        local branch=""
+        local last_checkout_target=""
+        last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
+
+        # Prefer the exact checkout target when it resolves to the detached commit.
+        if [[ -n "$last_checkout_target" ]] && git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null; then
+            if [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
+                branch="$last_checkout_target"
+            fi
         fi
 
-        # Otherwise try remote branches
         if [[ -z "$branch" ]]; then
-            branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes \
-                      | grep -v '/HEAD$' | head -n 1)"
+            local ref
+
+            # Prefer real remote branches (origin/master), but skip symbolic aliases like origin/HEAD.
+            while IFS= read -r ref; do
+                [[ "$ref" == */HEAD ]] && continue
+                branch="$ref"
+                break
+            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes)
+
+            # Fallback to local branches if no remote branch points exactly at this commit.
+            if [[ -z "$branch" ]]; then
+                branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
+            fi
         fi
 
-        # Fallback to local branches
-        [[ -z "$branch" ]] &&
-          branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
+        raw="${branch:+$branch }${short}..."
 
-        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${branch:+$branch }${short}...)${RESET}"
+        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw})${RESET}"
         return
     fi
 
-    # Normal branch
+    # Normal branch: keep tracked upstream behavior unchanged.
     if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
         echo "(${raw})"
-    else
-        printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
+        return
     fi
+
+    # No upstream configured for current branch.
+    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
 }
 
 # ------------------------------------------------------------
-# Unified Git segment (branch + status)
+# Compute Git segment (branch + status) — private helper
 # ------------------------------------------------------------
-git_prompt_segment() {
+_git_prompt_segment_compute() {
     local branch status
     branch="$(git_branch_wrapper)"
     status="$(git_prompt_info)"
 
     [[ -z "$branch" && -z "$status" ]] && return
 
+    # branch_wrapper already handles colors for special cases;
+    # we only wrap the whole block in COLOR_BRANCH for normal cases.
     printf "%b" "${COLOR_BRANCH}${branch}${COLOR_RESET}${status}"
+}
+
+# ------------------------------------------------------------
+# Public Git segment with caching
+# ------------------------------------------------------------
+git_prompt_segment() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
+
+    local key
+    key="$(git_cache_key)" || return
+
+    if [[ "$key" == "$__GIT_PROMPT_CACHE_KEY" ]]; then
+        printf "%b" "$__GIT_PROMPT_CACHE_VALUE"
+        return
+    fi
+
+    local value
+    value="$(_git_prompt_segment_compute)"
+
+    __GIT_PROMPT_CACHE_KEY="$key"
+    __GIT_PROMPT_CACHE_VALUE="$value"
+
+    printf "%b" "$value"
 }
 
 # ------------------------------------------------------------
