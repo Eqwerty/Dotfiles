@@ -79,63 +79,56 @@ git_local_ahead_count() {
 }
 
 git_prompt_info() {
-    local status
-    status="$(git status --porcelain=2 --branch 2>/dev/null)" || return
+  local status line
+  status="$(git status --porcelain=2 --branch 2>/dev/null)" || return
 
-    local untracked=0 conflicts=0 ahead=0 behind=0 has_upstream=0
-    declare -A staged=([A]=0 [M]=0 [D]=0 [R]=0)
-    declare -A unstaged=([A]=0 [M]=0 [D]=0 [R]=0)
+  local ahead=0 behind=0 has_upstream=0 untracked=0 conflicts=0 stash
+  local sA=0 sM=0 sD=0 sR=0 uA=0 uM=0 uD=0 uR=0
 
-    local status_line xy_status index_status worktree_status ahead_behind status_code status_symbol
-    while IFS= read -r status_line; do
-        case "$status_line" in
-            "# branch.ab "*)
-                ahead_behind="${status_line#\# branch.ab }"
-                ahead="${ahead_behind%% *}"; ahead="${ahead#+}"
-                behind="${ahead_behind##* }"; behind="${behind#-}"
-                has_upstream=1
-                ;;
-            "1 "*|"2 "*)
-                xy_status="${status_line:2:2}"
-                index_status="${xy_status:0:1}"
-                worktree_status="${xy_status:1:1}"
-                [[ -n "${staged[$index_status]+x}" ]] && ((staged[$index_status]++))
-                [[ -n "${unstaged[$worktree_status]+x}" ]] && ((unstaged[$worktree_status]++))
-                ;;
-            "u "*) ((conflicts++)) ;;
-            "? "*) ((untracked++)) ;;
-        esac
-    done <<< "$status"
+  while IFS= read -r line; do
+    case "$line" in
+      "# branch.ab "*) 
+        local ab="${line#\# branch.ab }"
+        ahead="${ab%% *}"; ahead="${ahead#+}"
+        behind="${ab##* }"; behind="${behind#-}"
+        has_upstream=1
+        ;;
+      "1 "*|"2 "*)
+        local xy="${line:2:2}"
+        case "${xy:0:1}" in A) ((sA++)) ;; M) ((sM++)) ;; D) ((sD++)) ;; R) ((sR++)) ;; esac
+        case "${xy:1:1}" in A) ((uA++)) ;; M) ((uM++)) ;; D) ((uD++)) ;; R) ((uR++)) ;; esac
+        ;;
+      "u "*) ((conflicts++)) ;;
+      "? "*) ((untracked++)) ;;
+    esac
+  done <<< "$status"
 
-    # No upstream branch: still show local progress from the likely branch base.
-    if [[ "$has_upstream" -eq 0 ]]; then
-        ahead="$(git_local_ahead_count)"
-        behind=0
-    fi
+  if [[ "$has_upstream" -eq 0 ]]; then
+    ahead="$(git_local_ahead_count)"
+    behind=0
+  fi
 
-    local stash
-    stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
+  stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
 
-    local out=""
-    [ "$ahead" -gt 0 ]  && out+=" ${COLOR_AHEAD}↑$ahead${COLOR_RESET}"
-    [ "$behind" -gt 0 ] && out+=" ${COLOR_BEHIND}↓$behind${COLOR_RESET}"
+  local out=""
+  [ "$ahead" -gt 0 ]  && out+=" ${COLOR_AHEAD}↑${ahead}${COLOR_RESET}"
+  [ "$behind" -gt 0 ] && out+=" ${COLOR_BEHIND}↓${behind}${COLOR_RESET}"
 
-    for status_code in A M D R; do
-        case "$status_code" in
-            A) status_symbol="+" ;;
-            M) status_symbol="~" ;;
-            D) status_symbol="-" ;;
-            R) status_symbol="→" ;;
-        esac
-        [ "${staged[$status_code]}" -gt 0 ]   && out+=" ${COLOR_STAGED}${status_symbol}${staged[$status_code]}${COLOR_RESET}"
-        [ "${unstaged[$status_code]}" -gt 0 ] && out+=" ${COLOR_UNSTAGED}${status_symbol}${unstaged[$status_code]}${COLOR_RESET}"
-    done
+  [ "$sA" -gt 0 ] && out+=" ${COLOR_STAGED}+${sA}${COLOR_RESET}"
+  [ "$sM" -gt 0 ] && out+=" ${COLOR_STAGED}~${sM}${COLOR_RESET}"
+  [ "$sD" -gt 0 ] && out+=" ${COLOR_STAGED}-${sD}${COLOR_RESET}"
+  [ "$sR" -gt 0 ] && out+=" ${COLOR_STAGED}→${sR}${COLOR_RESET}"
 
-    [ "$untracked" -gt 0 ] && out+=" ${COLOR_UNTRACKED}?${untracked}${COLOR_RESET}"
-    [ "$stash" -gt 0 ]     && out+=" ${COLOR_STASH}@$stash${COLOR_RESET}"
-    [ "$conflicts" -gt 0 ] && out+=" ${COLOR_STATE}!${conflicts}${COLOR_RESET}"
+  [ "$uA" -gt 0 ] && out+=" ${COLOR_UNSTAGED}+${uA}${COLOR_RESET}"
+  [ "$uM" -gt 0 ] && out+=" ${COLOR_UNSTAGED}~${uM}${COLOR_RESET}"
+  [ "$uD" -gt 0 ] && out+=" ${COLOR_UNSTAGED}-${uD}${COLOR_RESET}"
+  [ "$uR" -gt 0 ] && out+=" ${COLOR_UNSTAGED}→${uR}${COLOR_RESET}"
 
-    printf "%b" "$out"
+  [ "$untracked" -gt 0 ] && out+=" ${COLOR_UNTRACKED}?${untracked}${COLOR_RESET}"
+  [ "$stash" -gt 0 ]     && out+=" ${COLOR_STASH}@$stash${COLOR_RESET}"
+  [ "$conflicts" -gt 0 ] && out+=" ${COLOR_STATE}!${conflicts}${COLOR_RESET}"
+
+  printf "%b" "$out"
 }
 
 # ------------------------------------------------------------
