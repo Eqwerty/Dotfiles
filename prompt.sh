@@ -1,12 +1,11 @@
 # ------------------------------------------------------------
-# Git prompt support
+# Git prompt support (branch name extraction, __git_ps1, etc.)
 # ------------------------------------------------------------
-if [ -f /usr/share/git/completion/git-prompt.sh ]; then
+[ -f /usr/share/git/completion/git-prompt.sh ] && \
   . /usr/share/git/completion/git-prompt.sh
-fi
 
 # ------------------------------------------------------------
-# Variables and color palette
+# Color palette
 # ------------------------------------------------------------
 ESC=$'\e'
 RESET="${ESC}[0m"
@@ -15,6 +14,7 @@ ITALIC="${ESC}[3m"
 COLOR_USER="\e[0;32m"
 COLOR_HOST="\e[1;35m"
 COLOR_PATH="\e[38;5;172m"
+
 COLOR_BRANCH="\e[1;36m"
 COLOR_BRANCH_DETACHED="\e[1;36m"
 COLOR_BRANCH_NO_UPSTREAM="\e[1;36m"
@@ -31,45 +31,38 @@ COLOR_PROMPT="\e[0;37m"
 COLOR_RESET="\e[0m"
 
 # ------------------------------------------------------------
-# Git status summary
+# Count commits ahead of a base branch when no upstream exists.
+# Attempts: origin/HEAD → common mainline names → upstream.
 # ------------------------------------------------------------
 git_local_ahead_count() {
     local current_branch base_ref fork_point
 
-    # Fast exit when not in a git repo or no branch
-    if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        echo 0
-        return
-    fi
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo 0; return; }
 
     current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
     [[ -z "$current_branch" ]] && { echo 0; return; }
 
-    # Prefer remote-tracking origin HEAD, then common mainline names
     base_ref="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+
     if [[ -z "$base_ref" ]]; then
         for candidate in origin/main origin/master main master; do
-            if git show-ref --verify --quiet "refs/remotes/${candidate#origin/}" || git show-ref --verify --quiet "refs/heads/${candidate#origin/}"; then
+            if git show-ref --verify --quiet "refs/remotes/${candidate#origin/}" ||
+               git show-ref --verify --quiet "refs/heads/${candidate#origin/}"; then
                 base_ref="$candidate"
                 break
             fi
         done
     fi
 
-    # If still empty, fall back to upstream if available
-    if [[ -z "$base_ref" ]]; then
-        if git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
-            base_ref="@{u}"
-        fi
-    fi
+    [[ -z "$base_ref" ]] &&
+      git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1 &&
+      base_ref="@{u}"
 
     [[ -z "$base_ref" ]] && { echo 0; return; }
 
-    # Use merge-base --fork-point when available, otherwise merge-base
     fork_point="$(git merge-base --fork-point "$base_ref" HEAD 2>/dev/null || true)"
-    if [[ -z "$fork_point" ]]; then
-        fork_point="$(git merge-base "$base_ref" HEAD 2>/dev/null || true)"
-    fi
+    [[ -z "$fork_point" ]] &&
+      fork_point="$(git merge-base "$base_ref" HEAD 2>/dev/null || true)"
 
     if [[ -n "$fork_point" ]]; then
         git rev-list --count "${fork_point}..HEAD" 2>/dev/null || echo 0
@@ -78,6 +71,9 @@ git_local_ahead_count() {
     fi
 }
 
+# ------------------------------------------------------------
+# Parse porcelain v2 output and summarize repo state.
+# ------------------------------------------------------------
 git_prompt_info() {
   local status line
   status="$(git status --porcelain=2 --branch 2>/dev/null)" || return
@@ -87,13 +83,13 @@ git_prompt_info() {
 
   while IFS= read -r line; do
     case "$line" in
-      "# branch.ab "*) 
+      "# branch.ab "*)  
         local ab="${line#\# branch.ab }"
         ahead="${ab%% *}"; ahead="${ahead#+}"
         behind="${ab##* }"; behind="${behind#-}"
         has_upstream=1
         ;;
-      "1 "*|"2 "*)
+      "1 "*|"2 "*)  # staged/unstaged changes
         local xy="${line:2:2}"
         case "${xy:0:1}" in A) ((sA++)) ;; M) ((sM++)) ;; D) ((sD++)) ;; R) ((sR++)) ;; esac
         case "${xy:1:1}" in A) ((uA++)) ;; M) ((uM++)) ;; D) ((uD++)) ;; R) ((uR++)) ;; esac
@@ -103,6 +99,7 @@ git_prompt_info() {
     esac
   done <<< "$status"
 
+  # If no upstream, compute ahead count manually
   if [[ "$has_upstream" -eq 0 ]]; then
     ahead="$(git_local_ahead_count)"
     behind=0
@@ -111,8 +108,8 @@ git_prompt_info() {
   stash="$(git rev-list --walk-reflogs --count refs/stash 2>/dev/null || echo 0)"
 
   local out=""
-  [ "$ahead" -gt 0 ]  && out+=" ${COLOR_AHEAD}↑${ahead}${COLOR_RESET}"
-  [ "$behind" -gt 0 ] && out+=" ${COLOR_BEHIND}↓${behind}${COLOR_RESET}"
+  [ "$ahead"     -gt 0 ] && out+=" ${COLOR_AHEAD}↑${ahead}${COLOR_RESET}"
+  [ "$behind"    -gt 0 ] && out+=" ${COLOR_BEHIND}↓${behind}${COLOR_RESET}"
 
   [ "$sA" -gt 0 ] && out+=" ${COLOR_STAGED}+${sA}${COLOR_RESET}"
   [ "$sM" -gt 0 ] && out+=" ${COLOR_STAGED}~${sM}${COLOR_RESET}"
@@ -125,78 +122,65 @@ git_prompt_info() {
   [ "$uR" -gt 0 ] && out+=" ${COLOR_UNSTAGED}→${uR}${COLOR_RESET}"
 
   [ "$untracked" -gt 0 ] && out+=" ${COLOR_UNTRACKED}?${untracked}${COLOR_RESET}"
-  [ "$stash" -gt 0 ]     && out+=" ${COLOR_STASH}@$stash${COLOR_RESET}"
+  [ "$stash"     -gt 0 ] && out+=" ${COLOR_STASH}@$stash${COLOR_RESET}"
   [ "$conflicts" -gt 0 ] && out+=" ${COLOR_STATE}!${conflicts}${COLOR_RESET}"
 
   printf "%b" "$out"
 }
 
 # ------------------------------------------------------------
-# Branch wrapper with detached HEAD detection
+# Branch display with detached HEAD resolution.
+# Attempts to infer the original branch or remote ref.
 # ------------------------------------------------------------
 git_branch_wrapper() {
     local raw="$(__git_ps1 "%s")"
-
     [[ -z "$raw" ]] && { echo ""; return; }
 
     # Detached HEAD
     if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
-        local commit=$(git rev-parse HEAD)
-        local short=$(git rev-parse --short HEAD)
+        local commit short branch last_checkout_target
+        commit=$(git rev-parse HEAD)
+        short=$(git rev-parse --short HEAD)
+        last_checkout_target="$(git reflog -1 --format='%gs' | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
 
-        local branch=""
-        local last_checkout_target=""
-        last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
-
-        # Prefer the exact checkout target when it resolves to the detached commit.
-        if [[ -n "$last_checkout_target" ]] && git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null; then
-            if [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
-                branch="$last_checkout_target"
-            fi
+        # Prefer the checkout target if it resolves to this commit
+        if [[ -n "$last_checkout_target" ]] &&
+           git rev-parse --verify --quiet "${last_checkout_target}^{commit}" &&
+           [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
+            branch="$last_checkout_target"
         fi
 
+        # Otherwise try remote branches
         if [[ -z "$branch" ]]; then
-            local ref
-
-            # Prefer real remote branches (origin/master), but skip symbolic aliases like origin/HEAD.
-            while IFS= read -r ref; do
-                [[ "$ref" == */HEAD ]] && continue
-                branch="$ref"
-                break
-            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes)
-
-            # Fallback to local branches if no remote branch points exactly at this commit.
-            if [[ -z "$branch" ]]; then
-                branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
-            fi
+            branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes \
+                      | grep -v '/HEAD$' | head -n 1)"
         fi
 
-        raw="${branch:+$branch }${short}..."
+        # Fallback to local branches
+        [[ -z "$branch" ]] &&
+          branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
 
-        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw})${RESET}"
+        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${branch:+$branch }${short}...)${RESET}"
         return
     fi
 
-    # Normal branch: keep tracked upstream behavior unchanged.
+    # Normal branch
     if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
         echo "(${raw})"
-        return
+    else
+        printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
     fi
-
-    # No upstream configured for current branch.
-    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
 }
 
+# ------------------------------------------------------------
+# Unified Git segment (branch + status)
+# ------------------------------------------------------------
 git_prompt_segment() {
     local branch status
-
     branch="$(git_branch_wrapper)"
     status="$(git_prompt_info)"
 
-    # If both empty, return nothing
-    if [[ -z "$branch" && -z "$status" ]]; then
-        return
-    fi
+    [[ -z "$branch" && -z "$status" ]] && return
 
     printf "%b" "${COLOR_BRANCH}${branch}${COLOR_RESET}${status}"
 }
