@@ -145,55 +145,66 @@ git_prompt_info() {
 # Branch display with detached HEAD resolution (original behavior).
 # ------------------------------------------------------------
 git_branch_wrapper() {
-    local raw="$(__git_ps1 "%s")"
-
-    [[ -z "$raw" ]] && { echo ""; return; }
-
     # Detached HEAD
     if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
-        local commit=$(git rev-parse HEAD)
-        local short=$(git rev-parse --short HEAD)
+        local commit short branch last_checkout_target
+        commit=$(git rev-parse HEAD 2>/dev/null) || { echo ""; return; }
+        short=$(git rev-parse --short HEAD 2>/dev/null) || { echo ""; return; }
 
-        local branch=""
-        local last_checkout_target=""
+        branch=""
         last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
 
-        # Prefer the exact checkout target when it resolves to the detached commit.
-        if [[ -n "$last_checkout_target" ]] && git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null; then
-            if [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
-                branch="$last_checkout_target"
+        # Accept last_checkout_target only if it is a real ref (local or remote), not an abbreviated hash or a commit message.
+        if [[ -n "$last_checkout_target" ]]; then
+            if git show-ref --verify --quiet "refs/heads/$last_checkout_target" ||
+               git show-ref --verify --quiet "refs/remotes/$last_checkout_target" ||
+               git show-ref --verify --quiet "$last_checkout_target"; then
+                if git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null &&
+                   [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
+                    branch="$last_checkout_target"
+                fi
             fi
         fi
 
+        # Prefer remote branches pointing at this commit
         if [[ -z "$branch" ]]; then
-            local ref
-
-            # Prefer real remote branches (origin/master), but skip symbolic aliases like origin/HEAD.
             while IFS= read -r ref; do
                 [[ "$ref" == */HEAD ]] && continue
                 branch="$ref"
                 break
-            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes)
-
-            # Fallback to local branches if no remote branch points exactly at this commit.
-            if [[ -z "$branch" ]]; then
-                branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads | head -n 1)"
-            fi
+            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes 2>/dev/null)
         fi
 
-        raw="${branch:+$branch }${short}..."
+        # Fallback to local branches
+        if [[ -z "$branch" ]]; then
+            branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads 2>/dev/null | head -n 1)"
+        fi
 
-        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw})${RESET}"
+        # Avoid duplicating the short hash when branch equals the short hash
+        local display
+        if [[ -z "$branch" || "$branch" == "$short" ]]; then
+            display="${short}..."
+        else
+            display="${branch} ${short}..."
+        fi
+
+        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${display})${RESET}"
         return
     fi
 
-    # Normal branch: keep tracked upstream behavior unchanged.
+    # Non-detached: use __git_ps1 for normal branch formatting
+    local raw="$(__git_ps1 "%s")"
+
+    if [[ -z "$raw" ]]; then
+        echo ""
+        return
+    fi
+
     if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
         echo "(${raw})"
         return
     fi
 
-    # No upstream configured for current branch.
     printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
 }
 
