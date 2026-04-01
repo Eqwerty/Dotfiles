@@ -3,6 +3,8 @@
 # ------------------------------------------------------------
 [ -f /usr/share/git/completion/git-prompt.sh ] && \
   . /usr/share/git/completion/git-prompt.sh
+[ -f /usr/lib/git-core/git-sh-prompt ] && \
+    . /usr/lib/git-core/git-sh-prompt
 
 # ------------------------------------------------------------
 # Color palette
@@ -44,6 +46,19 @@ git_cache_key() {
         "$(stat -c %Y "$repo/HEAD" 2>/dev/null || echo 0)" \
         "$(stat -c %Y "$repo/index" 2>/dev/null || echo 0)" \
         "$(stat -c %Y "$repo/logs/refs/stash" 2>/dev/null || echo 0)"
+
+    # Track in-progress operation files so prompt state refreshes immediately.
+    printf ":%s:%s:%s:%s:%s:%s:%s:%s:%s:%s" \
+        "$(stat -c %Y "$repo/MERGE_HEAD" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/CHERRY_PICK_HEAD" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/REVERT_HEAD" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/BISECT_LOG" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-merge" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-apply" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-merge/msgnum" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-merge/end" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-apply/next" 2>/dev/null || echo 0)" \
+        "$(stat -c %Y "$repo/rebase-apply/last" 2>/dev/null || echo 0)"
 }
 
 # ------------------------------------------------------------
@@ -60,7 +75,7 @@ git_local_ahead_count() {
 
     if [[ -z "$base_ref" ]]; then
         for candidate in origin/main origin/master main master; do
-            if git show-ref --verify --quiet "refs/remotes/${candidate#origin/}" ||
+            if git show-ref --verify --quiet "refs/remotes/$candidate" ||
                git show-ref --verify --quiet "refs/heads/${candidate#origin/}"; then
                 base_ref="$candidate"
                 break
@@ -145,8 +160,19 @@ git_prompt_info() {
 # Branch display with detached HEAD resolution (original behavior).
 # ------------------------------------------------------------
 git_branch_wrapper() {
+    local raw raw_styled
+    raw="$(GIT_PS1_SHOWCOLORHINTS= __git_ps1 "%s")"
+
     # Detached HEAD
     if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
+        # When an operation is in progress, __git_ps1 includes state like
+        # feature|REBASE 1/1. Prefer it to avoid detached hash display.
+        if [[ "$raw" == *"|"* ]]; then
+            raw_styled="${raw//|/${ITALIC}|${ITALIC}}"
+            printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw_styled})${RESET}"
+            return
+        fi
+
         local commit short branch last_checkout_target
         commit=$(git rev-parse HEAD 2>/dev/null) || { echo ""; return; }
         short=$(git rev-parse --short HEAD 2>/dev/null) || { echo ""; return; }
@@ -193,8 +219,6 @@ git_branch_wrapper() {
     fi
 
     # Non-detached: use __git_ps1 for normal branch formatting
-    local raw="$(__git_ps1 "%s")"
-
     if [[ -z "$raw" ]]; then
         echo ""
         return
@@ -205,7 +229,8 @@ git_branch_wrapper() {
         return
     fi
 
-    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw})${RESET}"
+    raw_styled="${raw//|/${ITALIC}|${ITALIC}}"
+    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw_styled})${RESET}"
 }
 
 # ------------------------------------------------------------
@@ -220,7 +245,8 @@ _git_prompt_segment_compute() {
 
     # branch_wrapper already handles colors for special cases;
     # we only wrap the whole block in COLOR_BRANCH for normal cases.
-    printf "%b" "${COLOR_BRANCH}${branch}${COLOR_RESET}${status}"
+    printf "%b" "${COLOR_BRANCH}${branch}${COLOR_RESET}"
+    printf "%b" "${status}"
 }
 
 # ------------------------------------------------------------
