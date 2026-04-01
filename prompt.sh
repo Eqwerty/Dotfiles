@@ -11,7 +11,6 @@
 # ------------------------------------------------------------
 ESC=$'\e'
 RESET="${ESC}[0m"
-ITALIC="${ESC}[3m"
 
 COLOR_USER="\e[0;32m"
 COLOR_HOST="\e[1;35m"
@@ -160,16 +159,14 @@ git_prompt_info() {
 # Branch display with detached HEAD resolution (original behavior).
 # ------------------------------------------------------------
 git_branch_wrapper() {
-    local raw raw_styled
+    local raw
     raw="$(GIT_PS1_SHOWCOLORHINTS= __git_ps1 "%s")"
 
     # Detached HEAD
     if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
-        # When an operation is in progress, __git_ps1 includes state like
-        # feature|REBASE 1/1. Prefer it to avoid detached hash display.
+        # During an operation, __git_ps1 includes state like feature|REBASE 1/1
         if [[ "$raw" == *"|"* ]]; then
-            raw_styled="${raw//|/${ITALIC}|${ITALIC}}"
-            printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${raw_styled})${RESET}"
+            printf "%b\n" "${COLOR_BRANCH_DETACHED}(${raw})${RESET}"
             return
         fi
 
@@ -180,7 +177,6 @@ git_branch_wrapper() {
         branch=""
         last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
 
-        # Accept last_checkout_target only if it is a real ref (local or remote), not an abbreviated hash or a commit message.
         if [[ -n "$last_checkout_target" ]]; then
             if git show-ref --verify --quiet "refs/heads/$last_checkout_target" ||
                git show-ref --verify --quiet "refs/remotes/$last_checkout_target" ||
@@ -192,7 +188,6 @@ git_branch_wrapper() {
             fi
         fi
 
-        # Prefer remote branches pointing at this commit
         if [[ -z "$branch" ]]; then
             while IFS= read -r ref; do
                 [[ "$ref" == */HEAD ]] && continue
@@ -201,12 +196,10 @@ git_branch_wrapper() {
             done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes 2>/dev/null)
         fi
 
-        # Fallback to local branches
         if [[ -z "$branch" ]]; then
             branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads 2>/dev/null | head -n 1)"
         fi
 
-        # Avoid duplicating the short hash when branch equals the short hash
         local display
         if [[ -z "$branch" || "$branch" == "$short" ]]; then
             display="${short}..."
@@ -214,23 +207,27 @@ git_branch_wrapper() {
             display="${branch} ${short}..."
         fi
 
-        printf "%b\n" "${COLOR_BRANCH_DETACHED}${ITALIC}(${display})${RESET}"
+        printf "%b\n" "${COLOR_BRANCH_DETACHED}(${display})${RESET}"
         return
     fi
 
-    # Non-detached: use __git_ps1 for normal branch formatting
+    # Non-detached
     if [[ -z "$raw" ]]; then
         echo ""
         return
     fi
 
-    if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+    # During an operation, show as-is without ≡/≢
+    if [[ "$raw" == *"|"* ]]; then
         echo "(${raw})"
         return
     fi
 
-    raw_styled="${raw//|/${ITALIC}|${ITALIC}}"
-    printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}${ITALIC}(${raw_styled})${RESET}"
+    if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+        echo "(${raw})"
+    else
+        printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}*(${raw})${RESET}"
+    fi
 }
 
 # ------------------------------------------------------------
