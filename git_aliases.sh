@@ -105,6 +105,44 @@ function glm() {
     glogm -n $count
 }
 
+# Copy the short hash of the Nth most recent commit to the clipboard
+function gcc() {
+  local index commit_hash short_hash commit_message
+
+  if [ -z "$1" ]; then
+    echo "Usage: gcc <commit-position>"
+    echo "Example: gcc 4"
+    return 1
+  fi
+
+  if ! [[ "$1" =~ ^[1-9][0-9]*$ ]]; then
+    echo "Error: commit-position must be a positive integer"
+    return 1
+  fi
+
+  index="$1"
+  commit_hash=$(git rev-list --max-count="$index" HEAD 2>/dev/null | tail -n 1)
+
+  if [ -z "$commit_hash" ]; then
+    echo "Error: could not find commit at position $index"
+    return 1
+  fi
+
+  short_hash=$(git rev-parse --short "$commit_hash")
+  commit_message=$(git show -s --format=%s "$commit_hash")
+
+  if command -v clip.exe >/dev/null 2>&1; then
+    printf '%s' "$short_hash" | clip.exe
+  elif command -v clip >/dev/null 2>&1; then
+    printf '%s' "$short_hash" | clip
+  else
+    echo "Error: no clipboard command found (expected clip.exe or clip)"
+    return 1
+  fi
+
+  echo "Copied commit #$index: $short_hash - $commit_message"
+}
+
 # ============================ Show ============================
 alias gbl="git blame --color-by-age --color-lines" # Show blame information with color-by-age and color-lines
 alias ggr="git grep --no-index -i -I --exclude-standard --heading --line-number" # Search for a string in the repository
