@@ -32,35 +32,6 @@ COLOR_PROMPT="\e[0;37m"
 COLOR_RESET="\e[0m"
 
 # ------------------------------------------------------------
-# Cache state for Git prompt
-# ------------------------------------------------------------
-__GIT_PROMPT_CACHE_KEY=""
-__GIT_PROMPT_CACHE_VALUE=""
-
-git_cache_key() {
-    local repo
-    repo="$(git rev-parse --git-dir 2>/dev/null)" || return 1
-
-    printf "%s:%s:%s" \
-        "$(stat -c %Y "$repo/HEAD" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/index" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/logs/refs/stash" 2>/dev/null || echo 0)"
-
-    # Track in-progress operation files so prompt state refreshes immediately.
-    printf ":%s:%s:%s:%s:%s:%s:%s:%s:%s:%s" \
-        "$(stat -c %Y "$repo/MERGE_HEAD" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/CHERRY_PICK_HEAD" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/REVERT_HEAD" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/BISECT_LOG" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-merge" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-apply" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-merge/msgnum" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-merge/end" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-apply/next" 2>/dev/null || echo 0)" \
-        "$(stat -c %Y "$repo/rebase-apply/last" 2>/dev/null || echo 0)"
-}
-
-# ------------------------------------------------------------
 # Count commits ahead of a base branch when no upstream exists.
 # ------------------------------------------------------------
 git_local_ahead_count() {
@@ -233,7 +204,9 @@ git_branch_wrapper() {
 # ------------------------------------------------------------
 # Compute Git segment (branch + status) — private helper
 # ------------------------------------------------------------
-_git_prompt_segment_compute() {
+_git_prompt_segment() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
+
     local branch status
     branch="$(git_branch_wrapper)"
     status="$(git_prompt_info)"
@@ -247,34 +220,11 @@ _git_prompt_segment_compute() {
 }
 
 # ------------------------------------------------------------
-# Public Git segment with caching
-# ------------------------------------------------------------
-git_prompt_segment() {
-    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
-
-    local key
-    key="$(git_cache_key)" || return
-
-    if [[ "$key" == "$__GIT_PROMPT_CACHE_KEY" ]]; then
-        printf "%b" "$__GIT_PROMPT_CACHE_VALUE"
-        return
-    fi
-
-    local value
-    value="$(_git_prompt_segment_compute)"
-
-    __GIT_PROMPT_CACHE_KEY="$key"
-    __GIT_PROMPT_CACHE_VALUE="$value"
-
-    printf "%b" "$value"
-}
-
-# ------------------------------------------------------------
 # Prompt definition
 # ------------------------------------------------------------
 PS1='${debian_chroot:+($debian_chroot)}\
 \['"$COLOR_USER"'\]\u\['"$COLOR_RESET"'\]\
 \['"$COLOR_HOST"'\] \h\['"$COLOR_RESET"'\]\
 \['"$COLOR_PATH"'\] \w \['"$COLOR_RESET"'\]\
-$(git_prompt_segment)\
+$(_git_prompt_segment)\
 \n\['"$COLOR_PROMPT"'\]\$ \['"$COLOR_RESET"'\]'
