@@ -45,14 +45,14 @@ function _match() {
 alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh?$(date +%s)" -o "$HOME/.git_aliases.sh" && reload'
 alias updateprompt='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/prompt.sh?$(date +%s)" -o "$HOME/.prompt.sh" && reload'
 
-for alias_file in \
-    ~/.prompt.sh \
-    ~/.custom_aliases.sh \
-    ~/.git_aliases.sh
-do
-    if [[ -f $alias_file ]]; then
-        source "$alias_file"
-        alias_name=$(basename "$alias_file" .sh)
-        alias "$alias_name"="code $alias_file -n"
-    fi
-done
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+if [ -f ~/.prompt.sh ]; then
+    . ~/.prompt.sh
+fi
+
+if [ -f ~/.git_aliases.sh ]; then
+    . ~/.git_aliases.sh
+fi
