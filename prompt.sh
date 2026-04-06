@@ -130,75 +130,54 @@ git_prompt_info() {
 # Branch display with detached HEAD resolution (original behavior).
 # ------------------------------------------------------------
 git_branch_wrapper() {
-    local raw
-    raw="$(GIT_PS1_SHOWCOLORHINTS= __git_ps1 "%s")"
+    local head_file head branch commit short git_dir
 
-    # Detached HEAD
-    if [[ -z "$(git symbolic-ref -q HEAD)" ]]; then
-        # During an operation, __git_ps1 includes state like feature|REBASE 1/1
-        if [[ "$raw" == *"|"* ]]; then
-            printf "%b\n" "${COLOR_BRANCH_DETACHED}(${raw})${RESET}"
-            return
+    git_dir="$(git rev-parse --git-dir 2>/dev/null)" || return
+    head_file="$git_dir/HEAD"
+
+    [[ -f "$head_file" ]] || return
+    read -r head < "$head_file"
+
+    # HEAD points to a branch
+    if [[ "$head" == ref:\ * ]]; then
+        branch="${head#ref: }"
+        branch="${branch#refs/heads/}"
+
+        # Check upstream in .git/config
+        if grep -q "^\[branch \"$branch\"\]" "$git_dir/config"; then
+            echo "($branch)"   # has upstream
+        else
+            printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}*(${branch})${RESET}"
         fi
+        return
+    fi
 
-        local commit short branch last_checkout_target
-        commit=$(git rev-parse HEAD 2>/dev/null) || { echo ""; return; }
-        short=$(git rev-parse --short HEAD 2>/dev/null) || { echo ""; return; }
+    # Detached HEAD: head contains a commit hash
+    commit="$head"
+    short="${commit:0:7}"
 
-        branch=""
-        last_checkout_target="$(git reflog -1 --format='%gs' 2>/dev/null | sed -n 's/^checkout: moving from .* to \(.*\)$/\1/p')"
-
-        if [[ -n "$last_checkout_target" ]]; then
-            if git show-ref --verify --quiet "refs/heads/$last_checkout_target" ||
-               git show-ref --verify --quiet "refs/remotes/$last_checkout_target" ||
-               git show-ref --verify --quiet "$last_checkout_target"; then
-                if git rev-parse --verify --quiet "${last_checkout_target}^{commit}" >/dev/null &&
-                   [[ "$(git rev-parse "${last_checkout_target}^{commit}")" == "$commit" ]]; then
-                    branch="$last_checkout_target"
-                fi
+    # Try to find matching remote branch
+    while IFS= read -r ref; do
+        if [[ -f "$git_dir/$ref" ]]; then
+            if read -r ref_commit < "$git_dir/$ref" && [[ "$ref_commit" == "$commit" ]]; then
+                echo "(${ref#refs/remotes/} ${short}...)"
+                return
             fi
         fi
+    done < <(cd "$git_dir" && find refs/remotes -type f 2>/dev/null)
 
-        if [[ -z "$branch" ]]; then
-            while IFS= read -r ref; do
-                [[ "$ref" == */HEAD ]] && continue
-                branch="$ref"
-                break
-            done < <(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/remotes 2>/dev/null)
+    # Try local branches
+    while IFS= read -r ref; do
+        if [[ -f "$git_dir/$ref" ]]; then
+            if read -r ref_commit < "$git_dir/$ref" && [[ "$ref_commit" == "$commit" ]]; then
+                echo "(${ref#refs/heads/} ${short}...)"
+                return
+            fi
         fi
+    done < <(cd "$git_dir" && find refs/heads -type f 2>/dev/null)
 
-        if [[ -z "$branch" ]]; then
-            branch="$(git for-each-ref --points-at "$commit" --format='%(refname:short)' refs/heads 2>/dev/null | head -n 1)"
-        fi
-
-        local display
-        if [[ -z "$branch" || "$branch" == "$short" ]]; then
-            display="${short}..."
-        else
-            display="${branch} ${short}..."
-        fi
-
-        printf "%b\n" "${COLOR_BRANCH_DETACHED}(${display})${RESET}"
-        return
-    fi
-
-    # Non-detached
-    if [[ -z "$raw" ]]; then
-        echo ""
-        return
-    fi
-
-    # During an operation, show as-is without ≡/≢
-    if [[ "$raw" == *"|"* ]]; then
-        echo "(${raw})"
-        return
-    fi
-
-    if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
-        echo "(${raw})"
-    else
-        printf "%b\n" "${COLOR_BRANCH_NO_UPSTREAM}*(${raw})${RESET}"
-    fi
+    # Fallback
+    echo "(${short}...)"
 }
 
 # ------------------------------------------------------------
