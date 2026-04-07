@@ -19,4 +19,4 @@ A simple guide to install and configure [delta](https://github.com/dandavison/de
     conflictStyle = zdiff3
 
 # Git Completion
-https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh
+https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
