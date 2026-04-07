@@ -230,7 +230,23 @@ function gh() {
 }
 
 # ============================ Utils ============================
-alias gdefault="git symbolic-ref refs/remotes/origin/HEAD | cut -d'/' -f4" # Get the default branch name
+# Get the default branch name with fallbacks when origin/HEAD is not configured
+function gdefault() {
+  local default_branch
+
+  default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | cut -d'/' -f2)
+
+  if [ -z "$default_branch" ]; then
+    default_branch=$(git remote show origin 2>/dev/null | awk -F': ' '/HEAD branch/ {print $2; exit}')
+  fi
+
+  if [ -z "$default_branch" ]; then
+    default_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  fi
+
+  printf '%s\n' "$default_branch"
+}
+
 alias gcurrent="git symbolic-ref --short HEAD" # Get the current branch name
 alias gcgl="git config --global --list" # List the current global Git configuration
 alias gcge="git config --global --edit" # Opens the global Git configuration file
