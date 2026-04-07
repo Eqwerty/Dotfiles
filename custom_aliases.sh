@@ -1,12 +1,12 @@
 # Open a solution file in Rider (defaults to the only solution if one match is found)
 function rider() {
-  local results=$(find . -maxdepth 1 -type f -iname "*.sln")
- 
+  local results=$(find . -maxdepth 1 -type f \( -iname "*.sln" -o -iname "*.slnx" \))
+
   if [ -z "$results" ]; then
-    echo -e "No solution file found"
+    echo -e "No solution file found (.sln or .slnx)"
   else
     local count=$(echo "$results" | wc -l)
- 
+
     if [ "$count" -eq 1 ]; then
       rider64.exe "$results"
     else
