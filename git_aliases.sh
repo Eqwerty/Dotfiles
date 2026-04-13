@@ -3,6 +3,7 @@ alias gcl="git clone" # Clone a repository
 
 # ============================ Add ============================
 alias ga="git add" # Add files to the staging area
+alias gaa="git add -A" # Add all changes to the staging area
 alias gas="git add -A && git status -s" # Add all changes to the staging area and show a short status
 alias gap="git add --patch" # Interactively stage changes in the working directory
 
