@@ -134,7 +134,11 @@ function gcc() {
   commit_message=$(git show -s --format=%s "$commit_hash")
 
   if command -v clip.exe >/dev/null 2>&1; then
-    printf '%s' "$short_hash" | iconv -f UTF-8 -t UTF-16LE | clip.exe
+    if command -v iconv >/dev/null 2>&1; then
+      printf '%s' "$short_hash" | iconv -f UTF-8 -t UTF-16LE | clip.exe
+    else
+      printf '%s' "$short_hash" | clip.exe
+    fi
   elif command -v clip >/dev/null 2>&1; then
     printf '%s' "$short_hash" | clip
   else
