@@ -72,8 +72,8 @@ alias gra="git rebase --abort" # Abort a rebase
 alias grc="git rebase --continue" # Continue a rebase after resolving conflicts
 
 # ============================ Stash ============================
-alias gsu="git stash -u" # Stash untracked changes
-alias gsum="git stash -u -m" # Stash untracked changes with a message
+alias gsu="git stash push -u" # Stash untracked changes
+alias gsum="git stash push -u -m" # Stash untracked changes with a message
 alias gsd="git stash drop" # Drop a stash
 alias gsp="git stash pop" # Apply the most recent stash
 alias gsl="git stash list" # List all stashes
