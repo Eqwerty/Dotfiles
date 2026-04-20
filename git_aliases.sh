@@ -15,6 +15,7 @@ function gam() {
 # ============================ Commit ============================
 alias gc="git commit -m" # Commit with a message
 alias gca="git commit --amend --no-edit" # Amend the last commit without changing the message
+alias gcae="git commit --amend" # Amend the last commit and open the editor to change the message
 alias gcam="git commit --amend -m" # Amend the last commit and edit the message
 
 # ============================ Branch ============================
