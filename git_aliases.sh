@@ -80,6 +80,7 @@ alias gsp="git stash pop" # Apply the most recent stash
 alias gsl="git stash list" # List all stashes
 alias gsc="git stash clear" # Clear all stashes
 alias gsa="git stash apply" # Apply a stash
+alias gsshno="git stash show --name-only" # Show names of files changed in a stash
 
 # Show changes of a specific stash
 function gssh() {
