@@ -90,6 +90,21 @@ function gssh() {
   git stash show -w -p stash@{$1}
 }
 
+# stash changes of a specific file based on a partial name match from modified files
+function gsufm() {
+  if [ -z "$1" ]; then
+    echo "Usage: gsufm <partial-file-name>"
+    return 1
+  fi
+  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$1")
+
+  case ${#matches[@]} in
+    1) git stash push -u "${matches[0]}" ;;
+    0) echo "No files found matching '$1'" ; return 3 ;;
+    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
+  esac
+}
+
 # ============================ Log ============================
 alias glog="git log --graph --pretty=format:'%C(bold cyan)%h%Creset%C(auto)%d%Creset %C(white)%s %Cgreen(%cr) %C(bold cyan)<%an>%Creset' --abbrev-commit" # Show a graphical log with commit details
 alias glogm="glog --author='$(git config --get user.email)'" # Show a graphical log with commits by the current user
