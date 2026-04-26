@@ -297,6 +297,7 @@ __git_complete ga _git_add
 __git_complete gb _git_branch
 __git_complete gbd _git_branch
 __git_complete gbD _git_branch
+__git_complete gbm _git_branch
 __git_complete gco _git_checkout
 __git_complete gcot _git_checkout
 __git_complete gd _git_diff
@@ -305,6 +306,9 @@ __git_complete ggr _git_grep
 __git_complete glh _git_log
 __git_complete gm _git_merge
 __git_complete gms _git_merge
+__git_complete gpl _git_pull
+__git_complete gplr _git_pull
 __git_complete gr _git_rebase
 __git_complete gri _git_rebase
+__git_complete gcp _git_cherry_pick
 __git_complete gsh _git_show
