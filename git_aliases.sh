@@ -94,13 +94,13 @@ alias gluh="glog @{u}..HEAD" # Show commits not pushed to the upstream branch
 # Display a limited number of recent Git log entries (default: all)
 function gl() {
     local count=${1:--1}
-    glog -n $count
+    glog -n "$count"
 }
 
 # Display a limited number of recent Git log entries (default: all) by the author logged in
 function glm() {
     local count=${1:--1}
-    glogm -n $count
+    glogm -n "$count"
 }
 
 # Copy the short hash of the Nth most recent commit to the clipboard
@@ -161,7 +161,7 @@ function grh() {
     echo "Usage: grh <number-of-commits>"
     return 1
   fi
-  git reset HEAD~$1 --soft
+  git reset "HEAD~$1" --soft
 }
 
 # Reset the current branch to the specified commit and apply --hard
