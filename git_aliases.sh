@@ -253,6 +253,7 @@ alias gcurrent="git symbolic-ref --short HEAD" # Get the current branch name
 alias gcgl="git config --global --list" # List the current global Git configuration
 alias gcge="git config --global --edit" # Opens the global Git configuration file
 alias gcfd="git clean -fd" # Remove untracked files and directories
+alias gcfdn="git clean -fdn" # Show what would be removed by git clean -fd
 
 # Execute a Git command on a file matched by partial name from the working directory
 # Usage: __git_match_and_execute <description> <partial-file-name> <git-command>
