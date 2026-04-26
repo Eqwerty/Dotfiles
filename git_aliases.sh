@@ -32,18 +32,7 @@ alias gcob="git checkout -b" # Create and switch to a new branch
 
 # Check out a branch based on a partial name match.
 function gcobm() {
-  if [ -z "$1" ]; then
-    echo "Usage: gcobm <partial-branch-name>"
-    return 1
-  fi
-
-  mapfile -t matches < <(git branch --list | grep -i "$1" | sed 's/^[* ] //')
-
-  case ${#matches[@]} in
-    1) git checkout "${matches[0]}" ;;
-    0) echo "No branches found matching '$1'" ; return 3 ;;
-    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
-  esac
+  __git_match_from_list "gcobm" "$1" "git branch --list | sed 's/^[* ] //'" "git checkout"
 }
 
 # ============================ Merge ============================
@@ -288,7 +277,33 @@ function __git_match_and_execute() {
     *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
   esac
 }
- 
+
+# Dispatch a git command on a single item matched by partial name from a generated list
+# Usage: __git_match_from_list <description> <partial> <list-command> <git-command>
+# - <list-command> produces candidate items (one per line); items are filtered by <partial>.
+# - If exactly one match is found, <git-command> is run with that item.
+# - If multiple matches are found, it lists them and exits with code 2.
+# - If no match is found, it exits with code 3.
+function __git_match_from_list() {
+  local description="$1"
+  local partial="$2"
+  local list_command="$3"
+  local command="$4"
+
+  if [ -z "$partial" ]; then
+    echo "Usage: $description <partial-name>"
+    return 1
+  fi
+
+  mapfile -t matches < <(eval "$list_command" | grep -i "$partial")
+
+  case ${#matches[@]} in
+    1) $command "${matches[0]}" ;;
+    0) echo "No items found matching '$partial'" ; return 3 ;;
+    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
+  esac
+}
+
 # Enable autocomplete for aliases
 __git_complete ga _git_add
 __git_complete gb _git_branch
