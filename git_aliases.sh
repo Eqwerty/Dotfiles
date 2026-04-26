@@ -307,9 +307,7 @@ __git_complete gbD _git_branch
 __git_complete gco _git_checkout
 __git_complete gcot _git_checkout
 __git_complete gd _git_diff
-__git_complete gdno _git_diff
 __git_complete gds _git_diff
-__git_complete gdsno _git_diff
 __git_complete ggr _git_grep
 __git_complete glh _git_log
 __git_complete gm _git_merge
