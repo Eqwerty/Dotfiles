@@ -93,17 +93,7 @@ function gssh() {
 
 # stash changes of a specific file based on a partial name match from modified files
 function gsufm() {
-  if [ -z "$1" ]; then
-    echo "Usage: gsufm <partial-file-name>"
-    return 1
-  fi
-  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$1")
-
-  case ${#matches[@]} in
-    1) git stash push -u "${matches[0]}" ;;
-    0) echo "No files found matching '$1'" ; return 3 ;;
-    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
-  esac
+  __git_match_and_execute "gsufm" "$1" "git stash push -u"
 }
 
 # ============================ Log ============================
