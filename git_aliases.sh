@@ -263,19 +263,7 @@ function __git_match_and_execute() {
   local description="$1"
   local partial_name="$2"
   local command="$3"
-
-  if [ -z "$partial_name" ]; then
-    echo "Usage: $description <partial-file-name>"
-    return 1
-  fi
-
-  mapfile -t matches < <(git status --porcelain | awk '{print $2}' | grep -i "$partial_name")
-
-  case ${#matches[@]} in
-    1) eval "$command \"${matches[0]}\"" ;;
-    0) echo "No files found matching '$partial_name'" ; return 3 ;;
-    *) echo "Multiple matches found:"; printf "  %s\n" "${matches[@]}"; return 2 ;;
-  esac
+  __git_match_from_list "$description" "$partial_name" "git status --porcelain | awk '{print \$2}'" "$command"
 }
 
 # Dispatch a git command on a single item matched by partial name from a generated list
