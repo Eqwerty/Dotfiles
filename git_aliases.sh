@@ -108,7 +108,7 @@ function gsufm() {
 
 # ============================ Log ============================
 alias glog="git log --graph --pretty=format:'%C(bold cyan)%h%Creset%C(auto)%d%Creset %C(white)%s %Cgreen(%cr) %C(bold cyan)<%an>%Creset' --abbrev-commit" # Show a graphical log with commit details
-alias glogm="glog --author='$(git config --get user.email)'" # Show a graphical log with commits by the current user
+function glogm() { glog --author="$(git config --get user.email)" "$@"; } # Show a graphical log with commits by the current user
 alias glh="glog HEAD.." # Show commits in other branches not yet merged into HEAD
 alias gluh="glog @{u}..HEAD" # Show commits not pushed to the upstream branch
 
