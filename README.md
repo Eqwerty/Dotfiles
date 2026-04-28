@@ -20,3 +20,7 @@ A simple guide to install and configure [delta](https://github.com/dandavison/de
 
 # Git Completion
 https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
+
+# Other useful packages
+- batcat
+- fzf
