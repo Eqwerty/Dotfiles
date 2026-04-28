@@ -13,6 +13,6 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
+alias lsd="ls -d */"
+alias lsf="ls -p | grep -v /"
 alias f="ls -a | grep -i --color=auto"
-cdm() { cd "$(ls -d */ | grep -i --color=auto "$1")"; }
-catm() { cat "$(ls -p | grep -v / | grep -i --color=auto "$1")"; }
