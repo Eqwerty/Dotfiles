@@ -1,5 +1,5 @@
 alias reload="source ~/.bashrc"
-alias bashrc="code ~/.bashrc"
+alias bashrc="vim ~/.bashrc"
 
 alias ls='ls --color=auto --group-directories-first'
 alias dir='dir --color=auto'
@@ -13,53 +13,6 @@ alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 
-# Find and display files or directories matching a string
-function f() {
-  local query="$1"
-
-  ls -a | grep -i "$query"
-}
-
-# Change directory to the first matching directory
-function cdm() {
-  _match d "$1" cd "directory"
-}
-
-# Display the contents of the first matching file
-function catm() {
-  _match f "$1" cat "file"
-}
-
-function _match() {
-  local type="$1"
-  local query="$2"
-  local action="$3"
-  local noun="$4"
-  local results
-
-  if [ -z "$query" ]; then
-    echo "Usage: ${action}m <partial-${noun}-name>"
-    return 1
-  fi
-
-  IFS=$'\n' read -rd '' -a results < <(find . -maxdepth 1 -type "$type" -iname "*$query*" -printf "%f\n")
-
-  if [[ ${#results[@]} -eq 0 ]]; then
-    echo -e "No ${noun}s found containing: $query"
-  elif [[ ${#results[@]} -eq 1 ]]; then
-    $action "${results[0]}" || echo "Failed to $action ${results[0]}"
-  else
-    echo -e "\nMultiple ${noun}s found containing: $query\n"
-    printf -- "- %s\n" "${results[@]}"
-  fi
-}
-
-alias updategitaliases='curl -fsSL --ssl-no-revoke "https://raw.githubusercontent.com/Eqwerty/Dotfiles/refs/heads/main/git_aliases.sh?$(date +%s)" -o "$HOME/.git_aliases.sh" && reload'
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-if [ -f ~/.git_aliases.sh ]; then
-    . ~/.git_aliases.sh
-fi
+alias f="ls -a | grep -i --color=auto"
+cdm() { cd "$(ls -d */ | grep -i --color=auto "$1")"; }
+catm() { cat "$(ls -p | grep -v / | grep -i --color=auto "$1")"; }
