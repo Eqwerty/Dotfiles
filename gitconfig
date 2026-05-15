@@ -1,0 +1,25 @@
+[user]
+    email = edquintest@gmail.com
+    name = Eduardo Quintana
+[core]
+    pager = delta
+    editor = vim
+    autocrlf = false
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+	dark = true
+    side-by-side = true
+	line-numbers = true
+[pager]
+    diff = delta
+    log = delta
+    reflog = delta
+    show = delta
+[merge]
+    conflictStyle = zdiff3
+[credential]
+    helper = store
+[init]
+    defaultBranch = master
