@@ -16,6 +16,11 @@
    exit 0
  fi
 
+if [ "${1:-}" = "--list" ]; then
+    ls -A "$SAVE_DIR"
+    exit 0
+fi
+
  # Find powershell.exe (works on both WSL and Git Bash / native Windows)
  if command -v powershell.exe >/dev/null 2>&1; then
    POWERSHELL="powershell.exe"
