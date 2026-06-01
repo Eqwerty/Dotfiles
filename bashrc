@@ -17,8 +17,4 @@ alias lsd="ls -d */"
 alias lsf="ls -p | grep -v /"
 alias f="ls -a | grep -i --color=auto"
 
-ff() {
-    for pat in "$@"; do
-        find . -type f -iname "$pat"
-    done
-}
+alias fzff='find . -type f -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/.git/*" | fzf'
