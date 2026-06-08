@@ -20,3 +20,12 @@ set statusline=%f   " show relative file path at bottom
 
 " ---------- Clipboard ----------
 set clipboard=
+
+" ---------- Keymaps ----------
+" Jump between methods/classes
+nnoremap <A-Up>   [m
+nnoremap <A-Down> ]m
+
+" Scroll screen without moving cursor
+nnoremap <C-Up> <C-y>
+nnoremap <C-down> <C-e>
