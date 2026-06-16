@@ -17,6 +17,8 @@
     log = delta
     reflog = delta
     show = delta
+[fetch]
+    prune = true
 [merge]
     conflictStyle = zdiff3
 [credential]
