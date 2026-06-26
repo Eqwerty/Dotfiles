@@ -1,0 +1,28 @@
+{
+    "schemes":
+    [
+         {
+            "name": "GitHub Dark",
+            "background": "#0d1117",
+            "foreground": "#c9d1d9",
+            "black": "#484f58",
+            "red": "#b34e47",
+            "green": "#32b345",
+            "yellow": "#d29922",
+            "blue": "#58a6ff",
+            "purple": "#7f5db0",
+            "cyan": "#338b91",
+            "white": "#b1bac4",
+            "brightBlack": "#6e7681",
+            "brightRed": "#de5b52",
+            "brightGreen": "#3fb950",
+            "brightYellow": "#e3b341",
+            "brightBlue": "#79c0ff",
+            "brightPurple": "#976cd4",
+            "brightCyan": "#3eabb3",
+            "brightWhite": "#f0f6fc",
+            "cursorColor": "#c9d1d9",
+            "selectionBackground": "#2ea043"
+        }
+    ]
+}
