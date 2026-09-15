@@ -131,5 +131,17 @@ config.keys = {
     },
 }
 
+-- ============================================================
+-- Mouse shortcuts
+-- ============================================================
+
+config.mouse_bindings = {
+    -- Right-click copies the current selection
+    {
+        event = { Down = { streak = 1, button = 'Right' } },
+        mods = 'NONE',
+        action = act.CompleteSelection 'ClipboardAndPrimarySelection',
+    },
+}
 
 return config
