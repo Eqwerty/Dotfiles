@@ -8,6 +8,10 @@ local config = wezterm.config_builder()
 -- ============================================================
 
 config.font_size = 17.0
+config.default_cursor_style = 'BlinkingBlock'
+config.cursor_blink_rate = 500
+config.cursor_blink_ease_in = 'Constant'
+config.cursor_blink_ease_out = 'Constant'
 
 config.colors = {
     foreground = '#C9D1D9',
@@ -15,6 +19,7 @@ config.colors = {
 
     cursor_bg = '#C9D1D9',
     cursor_fg = '#151D29',
+    cursor_border = '#C9D1D9',
 
     -- Soft blue-gray selection that fits the rest of the palette
     selection_bg = '#2D4A63',
@@ -85,7 +90,7 @@ config.keys = {
     -- Ctrl + Shift + R
     {
         key = 'r',
-        mods = 'CTRL|SHIFT',
+        mods = 'CMD|SHIFT',
 
         action = act.PromptInputLine {
             description = 'New tab name:',
@@ -136,11 +141,32 @@ config.keys = {
 -- ============================================================
 
 config.mouse_bindings = {
-    -- Right-click copies the current selection
+    -- Right-click:
+    --   With selection    -> copy and clear selection
+    --   Without selection -> paste
     {
         event = { Down = { streak = 1, button = 'Right' } },
         mods = 'NONE',
-        action = act.CompleteSelection 'ClipboardAndPrimarySelection',
+        action = wezterm.action_callback(function(window, pane)
+            local selection = window:get_selection_text_for_pane(pane)
+
+            if selection ~= '' then
+                window:perform_action(
+                    act.CopyTo 'Clipboard',
+                    pane
+                )
+
+                window:perform_action(
+                    act.ClearSelection,
+                    pane
+                )
+            else
+                window:perform_action(
+                    act.PasteFrom 'Clipboard',
+                    pane
+                )
+            end
+        end),
     },
 }
 
