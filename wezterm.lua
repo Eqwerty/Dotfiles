@@ -8,10 +8,15 @@ local config = wezterm.config_builder()
 -- ============================================================
 
 config.font_size = 17.0
+
 config.default_cursor_style = 'BlinkingBlock'
 config.cursor_blink_rate = 500
 config.cursor_blink_ease_in = 'Constant'
 config.cursor_blink_ease_out = 'Constant'
+
+config.window_frame = {
+    font_size = 14.0,
+}
 
 config.colors = {
     foreground = '#C9D1D9',
