@@ -82,18 +82,32 @@ local tab_color_options = {
     { label = 'Gray',    id = 'gray' },
 }
 
+-- Colors used for inactive colored tabs.
+-- These are intentionally brighter so the color is easy to identify.
 local tab_color_values = {
     default = nil,
 
-    -- Match the ANSI shell colors above.
     blue    = '#58A6FF',
-    purple  = '#7F5DB0',
-    green   = '#41BE52',
-    yellow  = '#F5B924',
-    orange  = '#D18616',
-    red     = '#C12F25',
-    cyan    = '#3D797D',
-    gray    = '#6E7681',
+    purple  = '#A371F7',
+    green   = '#56D364',
+    yellow  = '#F2CC60',
+    orange  = '#DBAB79',
+    red     = '#F85149',
+    cyan    = '#39C5CF',
+    gray    = '#8B949E',
+}
+
+-- Darker versions used for active tab backgrounds.
+-- This keeps the active tab noticeable without being too bright.
+local tab_active_color_values = {
+    blue    = '#3978B8',
+    purple  = '#704CA8',
+    green   = '#3F984A',
+    yellow  = '#B89542',
+    orange  = '#A66B3A',
+    red     = '#A83B35',
+    cyan    = '#2D858C',
+    gray    = '#59616B',
 }
 
 
@@ -196,19 +210,57 @@ end)
 -- ============================================================
 
 wezterm.on('format-tab-title', function(tab, tabs, panes, config, hover, max_width)
-    local bg = tab_colors[tab.tab_id]
+    local accent = tab_colors[tab.tab_id]
 
-    if not bg then
-        if tab.is_active then
-            bg = '#21262D'
-        elseif hover then
-            bg = '#161B22'
+    local bg
+    local fg
+
+    if tab.is_active then
+        -- Active tab:
+        -- Use a darker version of the selected color as the background.
+        local active_bg = tab_active_color_values[tab_colors[tab.tab_id]]
+
+        -- tab_colors stores the actual color value, so find the
+        -- corresponding darker color by matching the selected value.
+        if accent == tab_color_values.blue then
+            bg = tab_active_color_values.blue
+        elseif accent == tab_color_values.purple then
+            bg = tab_active_color_values.purple
+        elseif accent == tab_color_values.green then
+            bg = tab_active_color_values.green
+        elseif accent == tab_color_values.yellow then
+            bg = tab_active_color_values.yellow
+        elseif accent == tab_color_values.orange then
+            bg = tab_active_color_values.orange
+        elseif accent == tab_color_values.red then
+            bg = tab_active_color_values.red
+        elseif accent == tab_color_values.cyan then
+            bg = tab_active_color_values.cyan
+        elseif accent == tab_color_values.gray then
+            bg = tab_active_color_values.gray
         else
-            bg = '#0D1117'
+            bg = '#21262D'
         end
+
+        fg = '#FFFFFF'
+
+    elseif accent then
+        -- Inactive colored tab:
+        -- Use the selected color as the text.
+        bg = '#0D1117'
+        fg = accent
+
+    elseif hover then
+        -- Hovered inactive tab.
+        bg = '#161B22'
+        fg = '#C9D1D9'
+
+    else
+        -- Normal inactive tab.
+        bg = '#0D1117'
+        fg = '#8B949E'
     end
 
-    local fg = tab.is_active and '#F0F6FC' or '#8B949E'
     local title = get_tab_title(tab)
 
     return {
