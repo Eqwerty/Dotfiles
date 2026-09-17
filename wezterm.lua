@@ -67,6 +67,7 @@ local tab_color_options = {
     { label = 'Red', id = 'red' },
     { label = 'Cyan', id = 'cyan' },
     { label = 'Gray', id = 'gray' },
+    { label = 'Pink', id = 'pink' },
 }
 
 local tab_color_values = {
@@ -78,6 +79,7 @@ local tab_color_values = {
     red = '#F85149',
     cyan = '#39C5CF',
     gray = '#8B949E',
+    pink = '#EC4899',
 }
 
 local tab_active_color_values = {
@@ -89,6 +91,7 @@ local tab_active_color_values = {
     red = '#A83B35',
     cyan = '#2D858C',
     gray = '#59616B',
+    pink = '#A8326B',
 }
 
 
@@ -106,6 +109,7 @@ local tab_color_encoded_values = {
     red = 'cmVk',
     cyan = 'Y3lhbg==',
     gray = 'Z3JheQ==',
+    pink = 'cGluaw==',
 }
 
 local function set_tab_color(window, pane, color_id)
