@@ -197,16 +197,16 @@ wezterm.on(
         local fg
 
         if tab.is_active then
-            bg = tab_active_color_values[color_id] or '#21262D'
+            bg = tab_active_color_values[color_id] or '#0D1117'
             fg = '#FFFFFF'
         elseif color_id and tab_color_values[color_id] then
             bg = '#0D1117'
             fg = tab_color_values[color_id]
         elseif hover then
-            bg = '#161B22'
+            bg = '#21262D'
             fg = '#C9D1D9'
         else
-            bg = '#0D1117'
+            bg = '#21262D'
             fg = '#8B949E'
         end
 
