@@ -228,6 +228,18 @@ wezterm.on(
 -- Keyboard shortcuts
 
 config.keys = {
+    -- macOS-style "delete previous word".
+    -- WezTerm sends Ctrl+W to Vim, which deletes the previous word
+    -- while staying in Insert mode.
+    {
+        key = 'Backspace',
+        mods = 'OPT',
+        action = act.SendKey {
+            key = 'w',
+            mods = 'CTRL',
+        },
+    },
+
     {
         key = 'r',
         mods = 'CMD|SHIFT',
@@ -301,4 +313,3 @@ end)
 
 
 return config
-
