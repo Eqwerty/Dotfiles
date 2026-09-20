@@ -292,4 +292,13 @@ config.mouse_bindings = {
 }
 
 
+-- Start maximized on macOS
+
+wezterm.on('gui-startup', function(cmd)
+    local _, _, window = wezterm.mux.spawn_window(cmd or {})
+    window:gui_window():maximize()
+end)
+
+
 return config
+
