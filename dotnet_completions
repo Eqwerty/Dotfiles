@@ -1,0 +1,31 @@
+_dotnet_complete()
+{
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local subcommand="${COMP_WORDS[1]}"
+
+    if [[ "$subcommand" == "run" ]]; then
+
+        # Files after --project / -p
+        if [[ "$prev" == "--project" || "$prev" == "-p" ]]; then
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            return
+        fi
+
+        # Positional argument to `dotnet run`
+        if [[ "$cur" != -* ]]; then
+            COMPREPLY=( $(compgen -f -- "$cur") )
+            return
+        fi
+    fi
+
+    # .NET CLI completion for everything else
+    local candidates
+    candidates=$(dotnet complete \
+        --position "$COMP_POINT" \
+        "$COMP_LINE" 2>/dev/null)
+
+    COMPREPLY=( $(compgen -W "$candidates" -- "$cur") )
+}
+
+complete -F _dotnet_complete dotnet
