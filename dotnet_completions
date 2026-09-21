@@ -8,12 +8,14 @@ _dotnet_complete()
 
         # Files after --project / -p
         if [[ "$prev" == "--project" || "$prev" == "-p" ]]; then
+            compopt -o filenames 2>/dev/null
             COMPREPLY=( $(compgen -f -- "$cur") )
             return
         fi
 
         # Positional argument to `dotnet run`
         if [[ "$cur" != -* ]]; then
+            compopt -o filenames 2>/dev/null
             COMPREPLY=( $(compgen -f -- "$cur") )
             return
         fi
