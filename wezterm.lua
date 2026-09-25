@@ -66,11 +66,11 @@ local tab_color_options = {
     { label = 'Orange', id = 'orange' },
     { label = 'Red', id = 'red' },
     { label = 'Cyan', id = 'cyan' },
-    { label = 'Gray', id = 'gray' },
     { label = 'Pink', id = 'pink' },
 }
 
 local tab_color_values = {
+    default = '#8B949E',
     blue = '#58A6FF',
     purple = '#A371F7',
     green = '#56D364',
@@ -78,11 +78,11 @@ local tab_color_values = {
     orange = '#DBAB79',
     red = '#F85149',
     cyan = '#39C5CF',
-    gray = '#8B949E',
     pink = '#EC4899',
 }
 
 local tab_active_color_values = {
+    default = '#59616B',
     blue = '#3978B8',
     purple = '#704CA8',
     green = '#3F984A',
@@ -90,7 +90,6 @@ local tab_active_color_values = {
     orange = '#A66B3A',
     red = '#A83B35',
     cyan = '#2D858C',
-    gray = '#59616B',
     pink = '#A8326B',
 }
 
@@ -108,7 +107,6 @@ local tab_color_encoded_values = {
     orange = 'b3Jhbmdl',
     red = 'cmVk',
     cyan = 'Y3lhbg==',
-    gray = 'Z3JheQ==',
     pink = 'cGluaw==',
 }
 
@@ -197,7 +195,7 @@ wezterm.on(
         local fg
 
         if tab.is_active then
-            bg = tab_active_color_values[color_id] or '#0D1117'
+            bg = tab_active_color_values[color_id] or '#59616B'
             fg = '#FFFFFF'
         elseif color_id and tab_color_values[color_id] then
             bg = '#0D1117'
