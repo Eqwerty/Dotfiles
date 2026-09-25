@@ -75,7 +75,7 @@ local tab_color_values = {
     purple = '#A371F7',
     green = '#56D364',
     yellow = '#F2CC60',
-    orange = '#DBAB79',
+    orange = '#F0883E',
     red = '#F85149',
     cyan = '#39C5CF',
     pink = '#EC4899',
@@ -87,7 +87,7 @@ local tab_active_color_values = {
     purple = '#704CA8',
     green = '#3F984A',
     yellow = '#B89542',
-    orange = '#A66B3A',
+    orange = '#B85C24',
     red = '#A83B35',
     cyan = '#2D858C',
     pink = '#A8326B',
@@ -311,3 +311,4 @@ end)
 
 
 return config
+
