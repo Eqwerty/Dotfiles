@@ -782,6 +782,26 @@ config.keys = {
         action = act.SplitVertical { domain = 'CurrentPaneDomain' },
     },
     {
+        key = 'LeftArrow',
+        mods = 'CTRL|CMD|SHIFT',
+        action = act.AdjustPaneSize { 'Left', 5 },
+    },
+    {
+        key = 'RightArrow',
+        mods = 'CTRL|CMD|SHIFT',
+        action = act.AdjustPaneSize { 'Right', 5 },
+    },
+    {
+        key = 'UpArrow',
+        mods = 'CTRL|CMD|SHIFT',
+        action = act.AdjustPaneSize { 'Up', 5 },
+    },
+    {
+        key = 'DownArrow',
+        mods = 'CTRL|CMD|SHIFT',
+        action = act.AdjustPaneSize { 'Down', 5 },
+    },
+    {
         key = 'w',
         mods = 'CMD',
         action = act.CloseCurrentPane { confirm = true },
