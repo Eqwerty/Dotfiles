@@ -28,6 +28,16 @@ set clipboard=
 nnoremap <A-Up>   [m
 nnoremap <A-Down> ]m
 
+" Move word by word
+nnoremap <A-Left>  b
+nnoremap <A-Right> w
+xnoremap <A-Left>  b
+xnoremap <A-Right> w
+inoremap <A-Left>  <S-Left>
+inoremap <A-Right> <S-Right>
+cnoremap <A-Left>  <S-Left>
+cnoremap <A-Right> <S-Right>
+
 " Scroll screen without moving cursor
 nnoremap <C-Up> <C-y>
 nnoremap <C-down> <C-e>
