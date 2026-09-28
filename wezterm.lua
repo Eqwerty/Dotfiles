@@ -4,7 +4,6 @@ local mux = wezterm.mux
 
 local config = wezterm.config_builder()
 
-
 config.font_size = 17.0
 
 config.default_cursor_style = 'BlinkingBlock'
@@ -54,88 +53,51 @@ config.ui_key_cap_rendering = 'AppleSymbols'
 config.use_fancy_tab_bar = true
 config.hide_tab_bar_if_only_one_tab = false
 
-
-local tab_color_options = {
-    { label = 'Default', id = 'default' },
-    { label = 'Blue', id = 'blue' },
-    { label = 'Purple', id = 'purple' },
-    { label = 'Green', id = 'green' },
-    { label = 'Yellow', id = 'yellow' },
-    { label = 'Orange', id = 'orange' },
-    { label = 'Red', id = 'red' },
-    { label = 'Cyan', id = 'cyan' },
-    { label = 'Pink', id = 'pink' },
+local TAB_COLORS = {
+    { id = 'default', label = 'Default', fg = '#8B949E', active = '#59616B' },
+    { id = 'blue', label = 'Blue', fg = '#58A6FF', active = '#3978B8' },
+    { id = 'purple', label = 'Purple', fg = '#A371F7', active = '#704CA8' },
+    { id = 'green', label = 'Green', fg = '#56D364', active = '#3F984A' },
+    { id = 'yellow', label = 'Yellow', fg = '#F2CC60', active = '#B89542' },
+    { id = 'orange', label = 'Orange', fg = '#F0883E', active = '#B85C24' },
+    { id = 'red', label = 'Red', fg = '#F85149', active = '#A83B35' },
+    { id = 'cyan', label = 'Cyan', fg = '#39C5CF', active = '#2D858C' },
+    { id = 'pink', label = 'Pink', fg = '#EC4899', active = '#A8326B' },
 }
 
-local tab_color_values = {
-    default = '#8B949E',
-    blue = '#58A6FF',
-    purple = '#A371F7',
-    green = '#56D364',
-    yellow = '#F2CC60',
-    orange = '#F0883E',
-    red = '#F85149',
-    cyan = '#39C5CF',
-    pink = '#EC4899',
-}
+local TAB_COLOR_BY_ID = {}
+local tab_color_choices = {}
 
-local tab_active_color_values = {
-    default = '#59616B',
-    blue = '#3978B8',
-    purple = '#704CA8',
-    green = '#3F984A',
-    yellow = '#B89542',
-    orange = '#B85C24',
-    red = '#A83B35',
-    cyan = '#2D858C',
-    pink = '#A8326B',
-}
-
-
-local TAB_COLOR_USER_VAR = 'WEZTERM_TAB_COLOR'
-
-local tab_color_encoded_values = {
-    default = '',
-    blue = 'Ymx1ZQ==',
-    purple = 'cHVycGxl',
-    green = 'Z3JlZW4=',
-    yellow = 'eWVsbG93',
-    orange = 'b3Jhbmdl',
-    red = 'cmVk',
-    cyan = 'Y3lhbg==',
-    pink = 'cGluaw==',
-}
-
+for _, color in ipairs(TAB_COLORS) do
+    TAB_COLOR_BY_ID[color.id] = color
+    table.insert(tab_color_choices, { id = color.id, label = color.label })
+end
 
 local function tab_color_key(tab_id)
     return 'tab_color_' .. tostring(tab_id)
 end
 
-local function set_tab_color(tab, pane, color_id)
-    local encoded_value = tab_color_encoded_values[color_id]
+local function refresh_tab_bar(pane)
+    wezterm.GLOBAL.tab_bar_refresh = not wezterm.GLOBAL.tab_bar_refresh
 
-    if encoded_value == nil then
+    local value = wezterm.GLOBAL.tab_bar_refresh and 'MQ==' or 'MA=='
+
+    pane:inject_output('\x1b]1337;SetUserVar=TAB_BAR_REFRESH=' .. value .. '\x07')
+end
+
+local function set_tab_color(tab, pane, color_id)
+    if not TAB_COLOR_BY_ID[color_id] then
         return
     end
 
     wezterm.GLOBAL[tab_color_key(tab:tab_id())] =
         color_id == 'default' and '' or color_id
 
-    pane:inject_output(
-        '\x1b]1337;SetUserVar='
-            .. TAB_COLOR_USER_VAR
-            .. '='
-            .. encoded_value
-            .. '\x07'
-    )
+    refresh_tab_bar(pane)
 end
 
-local function resolve_tab_color(tab_id, user_vars)
+local function get_tab_color(tab_id)
     local color_id = wezterm.GLOBAL[tab_color_key(tab_id)]
-
-    if color_id == nil and user_vars then
-        color_id = user_vars[TAB_COLOR_USER_VAR]
-    end
 
     if not color_id or color_id == '' then
         return nil
@@ -144,48 +106,18 @@ local function resolve_tab_color(tab_id, user_vars)
     return color_id
 end
 
-local function get_tab_color(tab)
-    return resolve_tab_color(tab.tab_id, tab.active_pane.user_vars)
-end
-
-
 local SESSION_DIR = wezterm.home_dir .. '/.local/state/wezterm'
 local SESSION_FILE = SESSION_DIR .. '/session.json'
-
-local function get_mux_tab_color(tab)
-    local pane = tab:active_pane()
-
-    return resolve_tab_color(tab:tab_id(), pane and pane:get_user_vars())
-end
 
 local function get_pane_cwd(pane)
     local cwd = pane:get_current_working_dir()
 
-    if not cwd then
-        return nil
-    end
-
-    if type(cwd) == 'userdata' then
-        if cwd.scheme == 'file' then
-            return cwd.file_path
-        end
-
-        return nil
-    end
-
-    if type(cwd) == 'string' then
-        local path = cwd:gsub('^file://[^/]*', '')
-
-        path = path:gsub('%%(%x%x)', function(hex)
-            return string.char(tonumber(hex, 16))
-        end)
-
-        return path
+    if cwd and cwd.scheme == 'file' then
+        return cwd.file_path
     end
 
     return nil
 end
-
 
 local SPLIT_AXES = {
     { direction = 'Right', start = 'left', size = 'width' },
@@ -269,7 +201,6 @@ local function get_pane_layout(tab)
     return layout, was_zoomed
 end
 
-
 local function tab_uid_key(tab)
     return 'tab_uid_' .. tostring(tab:tab_id())
 end
@@ -314,7 +245,7 @@ local function save_session()
             table.insert(window_info.tabs, {
                 title = tab:get_title(),
                 cwd = pane and get_pane_cwd(pane) or nil,
-                color = get_mux_tab_color(tab),
+                color = get_tab_color(tab:tab_id()),
                 id = ensure_tab_uid(tab),
                 panes = layout,
                 zoomed = zoomed or nil,
@@ -332,14 +263,26 @@ local function save_session()
 
     wezterm.run_child_process { 'mkdir', '-p', SESSION_DIR }
 
-    local file, err = io.open(SESSION_FILE, 'w')
+    local tmp_file = SESSION_FILE .. '.tmp'
+    local file, err = io.open(tmp_file, 'w')
 
     if not file then
         return nil, tostring(err)
     end
 
-    file:write(wezterm.json_encode(session))
+    local written, write_err = file:write(wezterm.json_encode(session))
     file:close()
+
+    if not written then
+        os.remove(tmp_file)
+        return nil, tostring(write_err)
+    end
+
+    local renamed, rename_err = os.rename(tmp_file, SESSION_FILE)
+
+    if not renamed then
+        return nil, tostring(rename_err)
+    end
 
     return tab_count
 end
@@ -466,7 +409,7 @@ local function open_tabs_by_key()
             local pane = tab:active_pane()
             local key = tab_key(
                 tab:get_title(),
-                get_mux_tab_color(tab),
+                get_tab_color(tab:tab_id()),
                 pane and get_pane_cwd(pane) or nil
             )
 
@@ -627,11 +570,11 @@ local function do_save(window)
         show_status(
             window,
             '✓ Session saved (' .. tab_count .. ' tabs)',
-            tab_color_values.green
+            TAB_COLOR_BY_ID.green.fg
         )
     else
         wezterm.log_error('Could not save session: ' .. err)
-        show_status(window, '✗ Could not save session', tab_color_values.red)
+        show_status(window, '✗ Could not save session', TAB_COLOR_BY_ID.red.fg)
     end
 end
 
@@ -651,7 +594,7 @@ local save_session_action = wezterm.action_callback(function(window, pane)
     end
 
     local lines = {
-        { Foreground = { Color = tab_color_values.yellow } },
+        { Foreground = { Color = TAB_COLOR_BY_ID.yellow.fg } },
         {
             Text = #unopened
                 .. ' saved tab(s) are not open and will be lost:\n\n',
@@ -659,8 +602,7 @@ local save_session_action = wezterm.action_callback(function(window, pane)
     }
 
     for _, saved_tab in ipairs(unopened) do
-        local color = tab_color_values[saved_tab.color or 'default']
-            or tab_color_values.default
+        local color = (TAB_COLOR_BY_ID[saved_tab.color] or TAB_COLOR_BY_ID.default).fg
         local name = saved_tab_label(saved_tab)
         local folders = {}
 
@@ -672,7 +614,7 @@ local save_session_action = wezterm.action_callback(function(window, pane)
         table.insert(lines, { Text = '  ● ' })
         table.insert(lines, { Foreground = { Color = '#F0F6FC' } })
         table.insert(lines, { Text = name .. string.rep(' ', name_width - #name) })
-        table.insert(lines, { Foreground = { Color = tab_color_values.default } })
+        table.insert(lines, { Foreground = { Color = TAB_COLOR_BY_ID.default.fg } })
 
         for index, folder in ipairs(folders) do
             if index > 1 then
@@ -683,7 +625,7 @@ local save_session_action = wezterm.action_callback(function(window, pane)
         end
     end
 
-    table.insert(lines, { Foreground = { Color = tab_color_values.default } })
+    table.insert(lines, { Foreground = { Color = TAB_COLOR_BY_ID.default.fg } })
     table.insert(lines, {
         Text = '\nType y and press Enter to save anyway; Enter or Esc cancels.',
     })
@@ -696,7 +638,7 @@ local save_session_action = wezterm.action_callback(function(window, pane)
                 if line and line:lower():match('^%s*y') then
                     do_save(window)
                 else
-                    show_status(window, 'Save cancelled', tab_color_values.default)
+                    show_status(window, 'Save cancelled', TAB_COLOR_BY_ID.default.fg)
                 end
             end),
         },
@@ -707,7 +649,6 @@ end)
 local load_session_action = wezterm.action_callback(function(window, pane)
     load_session(window)
 end)
-
 
 local rename_tab_action = act.PromptInputLine {
     description = 'New tab name:',
@@ -721,7 +662,7 @@ local rename_tab_action = act.PromptInputLine {
 
 local select_tab_color_action = act.InputSelector {
     title = 'Select tab color',
-    choices = tab_color_options,
+    choices = tab_color_choices,
     fuzzy = false,
 
     action = wezterm.action_callback(function(window, pane, id, label)
@@ -730,7 +671,6 @@ local select_tab_color_action = act.InputSelector {
         end
     end),
 }
-
 
 wezterm.on('augment-command-palette', function(window, pane)
     return {
@@ -753,21 +693,21 @@ wezterm.on('augment-command-palette', function(window, pane)
     }
 end)
 
-
 wezterm.on(
     'format-tab-title',
     function(tab, tabs, panes, config, hover, max_width)
-        local color_id = get_tab_color(tab)
+        local color_id = get_tab_color(tab.tab_id)
+        local color = TAB_COLOR_BY_ID[color_id] or TAB_COLOR_BY_ID.default
 
         local bg
         local fg
 
         if tab.is_active then
-            bg = tab_active_color_values[color_id] or '#59616B'
+            bg = color.active
             fg = '#FFFFFF'
-        elseif color_id and tab_color_values[color_id] then
+        elseif color_id and TAB_COLOR_BY_ID[color_id] then
             bg = '#0D1117'
-            fg = tab_color_values[color_id]
+            fg = color.fg
         elseif hover then
             bg = '#21262D'
             fg = '#C9D1D9'
@@ -790,20 +730,11 @@ wezterm.on(
     end
 )
 
-
 config.keys = {
     {
         key = 'Backspace',
         mods = 'OPT',
-        action = act.SendKey {
-            key = 'w',
-            mods = 'CTRL',
-        },
-    },
-    {
-        key = 'Backspace',
-        mods = 'OPT',
-        action = wezterm.action.SendString '\x1b\x7f',
+        action = act.SendString '\x1b\x7f',
     },
     {
         key = 'r',
@@ -890,12 +821,10 @@ config.mouse_bindings = {
     },
 }
 
-
 wezterm.on('gui-startup', function(cmd)
     local _, _, window = wezterm.mux.spawn_window(cmd or {})
     window:gui_window():maximize()
 end)
-
 
 return config
 
