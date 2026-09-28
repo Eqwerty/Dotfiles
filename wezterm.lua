@@ -831,13 +831,13 @@ config.keys = {
         action = act.ActivateTabRelative(1),
     },
     {
-        key = 'LeftArrow',
-        mods = 'CTRL|SHIFT',
+        key = 'UpArrow',
+        mods = 'CMD|SHIFT',
         action = act.MoveTabRelative(-1),
     },
     {
-        key = 'RightArrow',
-        mods = 'CTRL|SHIFT',
+        key = 'DownArrow',
+        mods = 'CMD|SHIFT',
         action = act.MoveTabRelative(1),
     },
     {
@@ -851,7 +851,6 @@ config.keys = {
         action = load_session_action,
     },
 }
-
 
 config.mouse_bindings = {
     {
