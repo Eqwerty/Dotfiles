@@ -463,6 +463,57 @@ local function find_open_tab(saved_tab, open)
     return nil
 end
 
+local SHELL_NAMES = { zsh = true, bash = true, fish = true, sh = true }
+
+local function without_trailing_slash(path)
+    return (path:gsub('(.)/$', '%1'))
+end
+
+local function find_startup_tab(mux_window)
+    local tabs = mux_window:tabs()
+
+    if #tabs ~= 1 or #tabs[1]:panes() ~= 1 then
+        return nil
+    end
+
+    local tab = tabs[1]
+    local pane = tab:active_pane()
+    local cwd = get_pane_cwd(pane)
+    local process = (pane:get_foreground_process_name() or ''):match('([^/]+)$')
+
+    if tab:get_title() == ''
+        and not get_tab_color(tab:tab_id())
+        and not get_tab_uid(tab)
+        and cwd
+        and without_trailing_slash(cwd) == without_trailing_slash(wezterm.home_dir)
+        and SHELL_NAMES[process]
+    then
+        return tab
+    end
+
+    return nil
+end
+
+local function close_tab(tab)
+    wezterm.background_child_process {
+        wezterm.executable_dir .. '/wezterm',
+        'cli',
+        'kill-pane',
+        '--pane-id',
+        tostring(tab:active_pane():pane_id()),
+    }
+end
+
+local function contains_tab(tabs, target)
+    for _, tab in pairs(tabs) do
+        if tab:tab_id() == target:tab_id() then
+            return true
+        end
+    end
+
+    return false
+end
+
 local function load_session(gui_window)
     local session = read_session()
 
@@ -476,9 +527,12 @@ local function load_session(gui_window)
     for window_index, saved_window in ipairs(session.windows) do
         local mux_window = nil
         local window_tabs = {}
+        local startup_tab = nil
+        local spawned_count = 0
 
         if window_index == 1 then
             mux_window = gui_window:mux_window()
+            startup_tab = find_startup_tab(mux_window)
         end
 
         for index, saved_tab in ipairs(saved_window.tabs or {}) do
@@ -504,6 +558,7 @@ local function load_session(gui_window)
                     set_tab_uid(tab, saved_tab.id)
                 end
                 window_tabs[index] = tab
+                spawned_count = spawned_count + 1
                 tab_count = tab_count + 1
             end
         end
@@ -512,6 +567,13 @@ local function load_session(gui_window)
 
         if active_tab then
             active_tab:activate()
+        end
+
+        if startup_tab
+            and spawned_count > 0
+            and not contains_tab(window_tabs, startup_tab)
+        then
+            close_tab(startup_tab)
         end
     end
 
