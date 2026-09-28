@@ -841,6 +841,21 @@ config.keys = {
         action = act.MoveTabRelative(1),
     },
     {
+        key = 'd',
+        mods = 'CMD',
+        action = act.SplitHorizontal { domain = 'CurrentPaneDomain' },
+    },
+    {
+        key = 'd',
+        mods = 'CMD|SHIFT',
+        action = act.SplitVertical { domain = 'CurrentPaneDomain' },
+    },
+    {
+        key = 'w',
+        mods = 'CMD',
+        action = act.CloseCurrentPane { confirm = true },
+    },
+    {
         key = 's',
         mods = 'CMD',
         action = save_session_action,
