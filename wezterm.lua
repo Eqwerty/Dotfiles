@@ -800,7 +800,11 @@ config.keys = {
             mods = 'CTRL',
         },
     },
-
+    {
+        key = 'Backspace',
+        mods = 'OPT',
+        action = wezterm.action.SendString '\x1b\x7f',
+    },
     {
         key = 'r',
         mods = 'CMD|SHIFT',
