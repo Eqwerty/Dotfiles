@@ -794,6 +794,22 @@ wezterm.on(
 
 config.keys = {
     {
+        key = 'LeftArrow',
+        mods = 'CMD',
+        action = act.SendKey {
+            key = 'a',
+            mods = 'CTRL',
+        },
+    },
+    {
+        key = 'RightArrow',
+        mods = 'CMD',
+        action = act.SendKey {
+            key = 'e',
+            mods = 'CTRL',
+        },
+    },
+    {
         key = 'c',
         mods = 'CMD',
         action = act.SendKey {
