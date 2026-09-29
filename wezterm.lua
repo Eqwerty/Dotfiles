@@ -794,6 +794,22 @@ wezterm.on(
 
 config.keys = {
     {
+        key = 'c',
+        mods = 'CMD',
+        action = act.SendKey {
+            key = 'c',
+            mods = 'CTRL',
+        },
+    },
+    {
+        key = 'z',
+        mods = 'CMD',
+        action = act.SendKey {
+            key = 'z',
+            mods = 'CTRL',
+        }
+    },
+    {
         key = 'Backspace',
         mods = 'OPT',
         action = act.SendString '\x1b\x7f',
