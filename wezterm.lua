@@ -831,6 +831,11 @@ config.keys = {
         action = act.SendString '\x1b\x7f',
     },
     {
+        key = 'Delete',
+        mods = 'OPT',
+        action = act.SendString '\x1bd',
+    },
+    {
         key = 'r',
         mods = 'CMD|SHIFT',
         action = rename_tab_action,
