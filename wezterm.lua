@@ -713,14 +713,19 @@ local load_session_action = wezterm.action_callback(function(window, pane)
     load_session(window)
 end)
 
-local rename_tab_action = act.PromptInputLine {
-    description = 'New tab name:',
+local rename_tab_action = act.Multiple {
+    act.ActivateKeyTable { name = 'prompt_input', one_shot = false },
+    act.PromptInputLine {
+        description = 'New tab name:',
 
-    action = wezterm.action_callback(function(window, pane, line)
-        if line then
-            window:active_tab():set_title(line)
-        end
-    end),
+        action = wezterm.action_callback(function(window, pane, line)
+            window:perform_action(act.PopKeyTable, pane)
+
+            if line then
+                window:active_tab():set_title(line)
+            end
+        end),
+    },
 }
 
 local select_tab_color_action = act.InputSelector {
@@ -915,6 +920,20 @@ config.keys = {
         key = 'l',
         mods = 'CMD',
         action = load_session_action,
+    },
+}
+
+config.key_tables = {
+    prompt_input = {
+        {
+            key = 'Escape',
+            action = act.SendKey { key = 'C', mods = 'CTRL' },
+        },
+        {
+            key = 'Backspace',
+            mods = 'OPT',
+            action = act.SendKey { key = 'W', mods = 'CTRL' },
+        },
     },
 }
 
