@@ -837,6 +837,14 @@ config.keys = {
         action = act.SendString '\x1b\x7f',
     },
     {
+        key = 'Backspace',
+        mods = 'CMD',
+        action = act.SendKey {
+            key = 'u',
+            mods = 'CTRL',
+        },
+    },
+    {
         key = 'Delete',
         mods = 'OPT',
         action = act.SendString '\x1bd',
