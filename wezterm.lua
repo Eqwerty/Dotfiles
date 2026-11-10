@@ -760,8 +760,61 @@ local duplicate_tab_action = wezterm.action_callback(function(window, pane)
     end
 end)
 
+local HELP_ENTRIES = {
+    { 'CMD+SHIFT+H', 'Show this help' },
+    { 'CMD+SHIFT+P', 'Command palette' },
+    { 'CMD+SHIFT+R', 'Rename current tab' },
+    { 'CMD+SHIFT+E', 'Select tab color' },
+    { 'CMD+SHIFT+C', 'Duplicate current tab' },
+    { 'CMD+SHIFT+Left/Right', 'Previous / next tab' },
+    { 'CMD+SHIFT+Up/Down', 'Move tab left / right' },
+    { 'CMD+D', 'Split pane right' },
+    { 'CMD+SHIFT+D', 'Split pane below' },
+    { 'CTRL+CMD+SHIFT+Arrows', 'Resize pane' },
+    { 'CMD+W', 'Close pane' },
+    { 'CMD+S', 'Save session' },
+    { 'CMD+L', 'Load session' },
+    { 'CMD+Left/Right', 'Start / end of line' },
+    { 'CMD+Backspace', 'Delete to start of line' },
+    { 'OPT+Backspace', 'Delete previous word' },
+    { 'OPT+Delete', 'Delete next word' },
+    { 'CMD+C', 'Send Ctrl+C' },
+    { 'CMD+Z', 'Send Ctrl+Z' },
+    { 'Right click', 'Copy selection, or paste if none' },
+}
+
+local function help_choices()
+    local keys_width = 0
+
+    for _, entry in ipairs(HELP_ENTRIES) do
+        keys_width = math.max(keys_width, #entry[1])
+    end
+
+    local choices = {}
+
+    for _, entry in ipairs(HELP_ENTRIES) do
+        local padding = string.rep(' ', keys_width - #entry[1])
+
+        table.insert(choices, { label = entry[1] .. padding .. '  ' .. entry[2] })
+    end
+
+    return choices
+end
+
+local show_help_action = act.InputSelector {
+    title = 'Keyboard shortcuts',
+    description = 'Keyboard shortcuts. Type to filter, Esc to close.',
+    choices = help_choices(),
+    fuzzy = true,
+    action = wezterm.action_callback(function() end),
+}
+
 wezterm.on('augment-command-palette', function(window, pane)
     return {
+        {
+            brief = 'Show keyboard shortcuts',
+            action = show_help_action,
+        },
         {
             brief = 'Duplicate current tab',
             action = duplicate_tab_action,
@@ -887,6 +940,11 @@ config.keys = {
         key = 'c',
         mods = 'CMD|SHIFT',
         action = duplicate_tab_action,
+    },
+    {
+        key = 'h',
+        mods = 'CMD|SHIFT',
+        action = show_help_action,
     },
     {
         key = 'p',
