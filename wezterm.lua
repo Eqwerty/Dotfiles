@@ -740,8 +740,32 @@ local select_tab_color_action = act.InputSelector {
     end),
 }
 
+local duplicate_tab_action = wezterm.action_callback(function(window, pane)
+    local source_tab = window:active_tab()
+    local title = source_tab:get_title()
+    local color_id = get_tab_color(source_tab:tab_id())
+
+    if title == '' then
+        title = pane:get_title()
+    end
+
+    local tab, new_pane = window:mux_window():spawn_tab {
+        cwd = get_pane_cwd(pane),
+    }
+
+    tab:set_title(title .. ' - copy')
+
+    if color_id then
+        set_tab_color(tab, new_pane, color_id)
+    end
+end)
+
 wezterm.on('augment-command-palette', function(window, pane)
     return {
+        {
+            brief = 'Duplicate current tab',
+            action = duplicate_tab_action,
+        },
         {
             brief = 'Rename current tab',
             action = rename_tab_action,
@@ -858,6 +882,11 @@ config.keys = {
         key = 'e',
         mods = 'CMD|SHIFT',
         action = select_tab_color_action,
+    },
+    {
+        key = 'c',
+        mods = 'CMD|SHIFT',
+        action = duplicate_tab_action,
     },
     {
         key = 'p',
