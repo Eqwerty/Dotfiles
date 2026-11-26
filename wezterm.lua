@@ -108,6 +108,22 @@ local function get_tab_color(tab_id)
     return color_id
 end
 
+local PENDING_PREFIX = '● '
+
+local function tab_pending_key(tab_id)
+    return 'tab_pending_' .. tostring(tab_id)
+end
+
+local function is_tab_pending(tab_id)
+    return wezterm.GLOBAL[tab_pending_key(tab_id)] == true
+end
+
+local function set_tab_pending(tab, pane, pending)
+    wezterm.GLOBAL[tab_pending_key(tab:tab_id())] = pending
+
+    refresh_tab_bar(pane)
+end
+
 local BELL_PREFIX = '» '
 local BELL_SUFFIX = ' «'
 local BELL_BLINK_DURATION_MS = 6000
@@ -272,6 +288,7 @@ local function save_session()
                 title = tab:get_title(),
                 cwd = pane and get_pane_cwd(pane) or nil,
                 color = get_tab_color(tab:tab_id()),
+                pending = is_tab_pending(tab:tab_id()) or nil,
                 id = ensure_tab_uid(tab),
                 panes = layout,
                 zoomed = zoomed or nil,
@@ -406,6 +423,10 @@ local function restore_tab(tab, pane, saved_tab, layout, missing_cwd)
 
     if saved_tab.color and saved_tab.color ~= '' then
         set_tab_color(tab, pane, saved_tab.color)
+    end
+
+    if saved_tab.pending then
+        set_tab_pending(tab, pane, true)
     end
 
     if missing_cwd then
@@ -785,12 +806,19 @@ local duplicate_tab_action = wezterm.action_callback(function(window, pane)
     end
 end)
 
+local toggle_pending_action = wezterm.action_callback(function(window, pane)
+    local tab = window:active_tab()
+
+    set_tab_pending(tab, pane, not is_tab_pending(tab:tab_id()))
+end)
+
 local HELP_ENTRIES = {
     { 'CMD+SHIFT+H', 'Show this help' },
     { 'CMD+SHIFT+P', 'Command palette' },
     { 'CMD+SHIFT+R', 'Rename current tab' },
     { 'CMD+SHIFT+E', 'Select tab color' },
     { 'CMD+SHIFT+C', 'Duplicate current tab' },
+    { 'CMD+SHIFT+M', 'Toggle pending mark on tab' },
     { 'CMD+SHIFT+Left/Right', 'Previous / next tab' },
     { 'CMD+SHIFT+Up/Down', 'Move tab left / right' },
     { 'CMD+D', 'Split pane right' },
@@ -845,6 +873,10 @@ wezterm.on('augment-command-palette', function(window, pane)
             action = duplicate_tab_action,
         },
         {
+            brief = 'Toggle pending mark on tab',
+            action = toggle_pending_action,
+        },
+        {
             brief = 'Rename current tab',
             action = rename_tab_action,
         },
@@ -890,6 +922,10 @@ wezterm.on(
 
         if not title or title == '' then
             title = tab.active_pane.title
+        end
+
+        if is_tab_pending(tab.tab_id) then
+            title = PENDING_PREFIX .. title
         end
 
         local since_bell = ms_since_bell(tab.tab_id)
@@ -1021,6 +1057,11 @@ config.keys = {
         key = 'c',
         mods = 'CMD|SHIFT',
         action = duplicate_tab_action,
+    },
+    {
+        key = 'm',
+        mods = 'CMD|SHIFT',
+        action = toggle_pending_action,
     },
     {
         key = 'h',
