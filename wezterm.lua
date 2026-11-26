@@ -53,6 +53,7 @@ config.colors = {
 config.ui_key_cap_rendering = 'AppleSymbols'
 config.use_fancy_tab_bar = true
 config.hide_tab_bar_if_only_one_tab = false
+config.status_update_interval = 250
 
 local TAB_COLORS = {
     { id = 'default', label = 'Default', fg = '#8B949E', active = '#59616B' },
@@ -105,6 +106,30 @@ local function get_tab_color(tab_id)
     end
 
     return color_id
+end
+
+local BELL_PREFIX = '» '
+local BELL_SUFFIX = ' «'
+local BELL_BLINK_DURATION_MS = 6000
+local BELL_BLINK_INTERVAL_MS = 500
+local BELL_BLINK_COLORS = { bg = '#F2CC60', fg = '#000000' }
+
+local function tab_bell_key(tab_id)
+    return 'tab_bell_' .. tostring(tab_id)
+end
+
+local function now_ms()
+    return tonumber(wezterm.time.now():format('%s%3f'))
+end
+
+local function ms_since_bell(tab_id)
+    local started_at = wezterm.GLOBAL[tab_bell_key(tab_id)]
+
+    if type(started_at) ~= 'number' then
+        return nil
+    end
+
+    return now_ms() - started_at
 end
 
 local SESSION_DIR = wezterm.home_dir .. '/.local/state/wezterm'
@@ -867,6 +892,19 @@ wezterm.on(
             title = tab.active_pane.title
         end
 
+        local since_bell = ms_since_bell(tab.tab_id)
+
+        if since_bell then
+            title = BELL_PREFIX .. title .. BELL_SUFFIX
+
+            local blink_phase = math.floor(since_bell / BELL_BLINK_INTERVAL_MS)
+
+            if since_bell < BELL_BLINK_DURATION_MS and blink_phase % 2 == 0 then
+                bg = BELL_BLINK_COLORS.bg
+                fg = BELL_BLINK_COLORS.fg
+            end
+        end
+
         return {
             { Background = { Color = bg } },
             { Foreground = { Color = fg } },
@@ -874,6 +912,49 @@ wezterm.on(
         }
     end
 )
+
+wezterm.on('bell', function(window, pane)
+    local tab = pane:tab()
+
+    if not tab then
+        return
+    end
+
+    local viewing_tab = window:is_focused()
+        and window:active_tab():tab_id() == tab:tab_id()
+
+    if viewing_tab then
+        return
+    end
+
+    wezterm.GLOBAL[tab_bell_key(tab:tab_id())] = now_ms()
+    refresh_tab_bar(pane)
+end)
+
+local function has_blinking_tab(window)
+    for _, tab in ipairs(window:mux_window():tabs()) do
+        local since_bell = ms_since_bell(tab:tab_id())
+
+        if since_bell and since_bell <= BELL_BLINK_DURATION_MS + 500 then
+            return true
+        end
+    end
+
+    return false
+end
+
+wezterm.on('update-status', function(window, pane)
+    local key = tab_bell_key(window:active_tab():tab_id())
+    local seen = window:is_focused() and wezterm.GLOBAL[key]
+
+    if seen then
+        wezterm.GLOBAL[key] = false
+    end
+
+    if seen or has_blinking_tab(window) then
+        refresh_tab_bar(pane)
+    end
+end)
 
 config.keys = {
     {
